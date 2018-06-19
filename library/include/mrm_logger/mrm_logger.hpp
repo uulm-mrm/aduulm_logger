@@ -54,7 +54,7 @@ __inline void CheckLogCnt()
 
 extern inline bool initLogger(std::string file_name, uint16_t log_level)
 {
-	std::cout << "Test: " << file_name << log_level << std::endl;
+//	std::cout << "Test: " << file_name << log_level << std::endl;
 	g_file_name = file_name;
 	g_oFile.close();
 	g_oFile.open(g_file_name);
