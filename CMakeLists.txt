@@ -126,7 +126,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} STATIC
   ${LIB_SRC}
 )
 
