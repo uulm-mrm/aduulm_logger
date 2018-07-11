@@ -20,6 +20,8 @@
 #include <mutex>
 #include <fstream>
 
+#define UTC_TIME false
+
 #define LOG_RESET   "\033[0m"
 #define LOG_NORMAL "\033[m\017"
 #define LOG_RED "\033[1m\033[31m"
@@ -82,28 +84,23 @@ __inline__ std::string simpleFileName(const std::string& file)
 
 __inline__ std::string longTime()
 {
-	auto _autoNow = std::chrono::system_clock::now();
-	std::time_t _ctimeNow = std::chrono::system_clock::to_time_t(_autoNow);
-	std::tm _tmBrokenTime = *std::localtime(&_ctimeNow);
+	auto _aNow = std::chrono::system_clock::now();
+	std::time_t _ctNow = std::chrono::system_clock::to_time_t(_aNow);
+	std::tm _tmBrokenTime;;
+	if (UTC_TIME) _tmBrokenTime = *std::gmtime(&_ctNow);
+	else _tmBrokenTime = *std::localtime(&_ctNow);
 
-//	// reset to midnight...
-	int64_t _nHours = _tmBrokenTime.tm_hour;
-	int64_t _nMin = _tmBrokenTime.tm_min;
-	int64_t _nSec = _tmBrokenTime.tm_sec;
-	_tmBrokenTime.tm_hour = 0;
-	_tmBrokenTime.tm_min = 0;
-	_tmBrokenTime.tm_sec = 0;
+	std::time_t _nUSSinceDay = std::chrono::duration_cast<std::chrono::microseconds>(_aNow - std::chrono::time_point_cast<std::chrono::seconds>(_aNow)).count(); // Millisecond fraction
 
-	_ctimeNow = std::mktime(&_tmBrokenTime);
+	_nUSSinceDay += _tmBrokenTime.tm_hour * 60ULL * 60 * 1000 * 1000; // microseconds for the hours today
+	_nUSSinceDay += _tmBrokenTime.tm_min * 60ULL * 1000 * 1000; // microseconds for the minutes today
+	_nUSSinceDay += _tmBrokenTime.tm_sec * 1000ULL * 1000; // microseconds for the seconds today
 
-	auto _autoDayStart = std::chrono::system_clock::from_time_t(_ctimeNow);
-	auto _autoRetVal = _autoNow - _autoDayStart;
-
-	auto _nTimeOfTheDay_us = std::chrono::duration_cast<std::chrono::microseconds>(_autoRetVal).count();
-
-	int64_t _ntm_us = _nTimeOfTheDay_us - ((_nHours * 3600 + _nMin * 60 + _nSec) * 1000000);
+	int64_t _ntm_us = _nUSSinceDay - ((_tmBrokenTime.tm_hour * 3600 + _tmBrokenTime.tm_min * 60 + _tmBrokenTime.tm_sec) * 1000000ULL);
+	std::cout << "tm_hour: " << _tmBrokenTime.tm_hour << " -> " << _tmBrokenTime.tm_hour * 3600 * 1000000ULL << std::endl;
+	std::cout << _nUSSinceDay << " - " << ((_tmBrokenTime.tm_hour * 3600 + _tmBrokenTime.tm_min * 60 + _tmBrokenTime.tm_sec) * 1000000ULL) << " = " << _ntm_us << std::endl;
 	char buf[40];
-	sprintf(buf, "%04d-%02d-%02d %02ld:%02ld:%02ld.%06ld", _tmBrokenTime.tm_year + 1900, _tmBrokenTime.tm_mon + 1, _tmBrokenTime.tm_mday, _nHours, _nMin, _nSec, _ntm_us);
+	sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", _tmBrokenTime.tm_year + 1900, _tmBrokenTime.tm_mon + 1, _tmBrokenTime.tm_mday, _tmBrokenTime.tm_hour, _tmBrokenTime.tm_min, _tmBrokenTime.tm_sec, _ntm_us);
 
 	return buf;
 }
