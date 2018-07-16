@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mrm_logger</name>
+  <name>aduulm_logger</name>
   <version>0.0.1</version>
-  <description>The mrm_logger package enables the use of ADTF_Logger commands in ROS. It can map from ADTF commands to cout or ROS logger.</description>
+  <description>The aduulm_logger package enables the use of ADTF_Logger commands in ROS. It can map from ADTF commands to cout or ROS logger.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
