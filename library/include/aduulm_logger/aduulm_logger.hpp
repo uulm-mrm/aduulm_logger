@@ -1,5 +1,5 @@
 /**
- * \file mrm_logger.h
+ * \file aduulmlogger.h
  *
  * @brief Remaps ADTF log commands to std::cout (as before) or ROS.
  * Remapping to ROS if built with -DHAVE_LOG

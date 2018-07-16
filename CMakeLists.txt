@@ -97,7 +97,7 @@ find_package(Boost COMPONENTS system REQUIRED) # Boost system is required for re
 catkin_package(
   INCLUDE_DIRS library/include
   LIBRARIES ${PROJECT_NAME}
-#  CATKIN_DEPENDS nodelet std_msgs mrm_ros_messages
+#  CATKIN_DEPENDS nodelet std_msgs aduulm_messages
 #  DEPENDS system_lib
 )
 
@@ -107,7 +107,7 @@ catkin_package(
 
 ## Specify variables containing the src files of the different targets
 set(LIB_SRC
-  library/src/mrm_logger.cpp
+  library/src/aduulm_logger.cpp
 )
   
 set(NODE_SRC
