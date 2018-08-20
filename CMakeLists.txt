@@ -162,6 +162,8 @@ add_library(${PROJECT_NAME} STATIC
 #  ${catkin_LIBRARIES}
 #)
 
+add_subdirectory("${CMAKE_BINARY_DIR}/../../root/git_hooks" "${CMAKE_CURRENT_BINARY_DIR}/.hooks")
+
 #############
 ## Install ##
 #############
