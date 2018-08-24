@@ -39,6 +39,7 @@ static std::mutex g_oLoggerMutex;
 extern std::ofstream g_oFile;  // = std::ofstream();
 extern std::string g_file_name;
 extern uint16_t g_log_level;  // = 2;
+extern std::string aduulm_logger_VERSION_ext;
 static int g_nLogCount = 0;
 static int g_nLogNr = 0;
 __inline void CheckLogCnt()
@@ -53,22 +54,8 @@ __inline void CheckLogCnt()
     g_nLogCount = 0;
   }
 }
-
-extern inline bool initLogger(std::string file_name, uint16_t log_level)
-{
-  //	std::cout << "Test: " << file_name << log_level << std::endl;
-  g_file_name = file_name;
-  g_oFile.close();
-  g_oFile.open(g_file_name);
-  g_log_level = log_level;
-  //	LOG_INF("Logger initialized");
-  return true;
-}
-extern inline bool initLogger()
-{
-  //	LOG_INF("Logger initialized");
-  return true;
-}
+extern inline bool initLogger(std::string file_name, uint16_t log_level);
+extern inline bool initLogger();
 
 /** use it remove all the directories from __FILE__. */
 namespace DataTypesLogger
@@ -252,6 +239,24 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr) ;
 #endif
 #endif
+
+extern inline bool initLogger(std::string file_name, uint16_t log_level)
+{
+  //	std::cout << "Test: " << file_name << log_level << std::endl;
+  g_file_name = file_name;
+  g_oFile.close();
+  g_oFile.open(g_file_name);
+  g_log_level = log_level;
+  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
+  //	LOG_INF("Logger initialized");
+  return true;
+}
+extern inline bool initLogger()
+{
+  //  LOG_INF("Logger initialized");
+  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
+  return true;
+}
 
 // TODO: Implement
 #ifndef LOG_EVAL

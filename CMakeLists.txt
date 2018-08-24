@@ -2,7 +2,15 @@ cmake_minimum_required(VERSION 2.8.3)
 project(aduulm_logger)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 -fPIC)
+
+# Add a cpp version string to the compiler
+set( VERSION_MAJOR "0" )
+set( VERSION_MINOR "1" )
+set( VERSION_PATCH "0" )
+set( ${PROJECT_NAME}_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}" )
+add_definitions("-D${PROJECT_NAME}_VERSION=\"${${PROJECT_NAME}_VERSION}\"")
+#message( "Building ldmrs_processing version: " ${${PROJECT_NAME}_VERSION} )
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
