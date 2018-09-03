@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>aduulm_logger</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>The aduulm_logger package enables the use of ADTF_Logger commands in ROS. It can map from ADTF commands to cout or ROS logger.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
