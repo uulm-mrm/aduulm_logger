@@ -63,7 +63,7 @@ This is research code, expect that it changes often and any fitness for a partic
 
 ## Bugs & Feature Requests
 
-Please report bugs and request features using the [Issue Tracker](https://mrm-130.e-technik.uni-ulm.de/herrmann/mrm_ros_template/issues).
+Please report bugs and request features using the [Issue Tracker](https://mrm-git.e-technik.uni-ulm.de/herrmann/mrm_ros_template/issues).
 
 
 
