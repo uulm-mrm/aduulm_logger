@@ -7,7 +7,7 @@
 #ifndef _LOGGER_H_
 #define _LOGGER_H_
 
-#ifdef USE_ROS_LOG
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
 #include <ros/ros.h>
 #endif
 
@@ -114,7 +114,7 @@ __inline__ std::thread::id thread_id()
 //
 // Set the default log level
 
-#ifdef USE_ROS_LOG
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
 #ifndef LOG_ERR
 #define LOG_ERR(expr) ROS_ERROR_STREAM(_LOG_BASE << ": " << expr);
 #endif
