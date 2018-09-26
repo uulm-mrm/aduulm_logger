@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
-project(aduulm_logger_lib)
+project(aduulm_logger)
 
 ## status logging
 message("${ColourBoldBlue}${PROJECT_NAME}::library${ColourReset}")
@@ -9,11 +9,11 @@ message("${ColourBoldBlue}${PROJECT_NAME}::library${ColourReset}")
 
 ## Specify variables containing the src files of the different targets
 set(sources
-  src/aduulm_logger.cpp
+  library/src/aduulm_logger.cpp
 )
 
 set(headers
-  include/aduulm_logger/aduulm_logger.hpp
+  library/include/aduulm_logger/aduulm_logger.hpp
 )
   
 ## Declare a C++ library
@@ -25,7 +25,7 @@ add_library(${PROJECT_NAME} STATIC
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 target_include_directories(${PROJECT_NAME}
-  PUBLIC include
+  PUBLIC library/include
   ${catkin_INCLUDE_DIRS}
 )
 

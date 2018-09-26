@@ -55,7 +55,7 @@ elseif(IS_ADTF)
 endif()
 
 
-add_subdirectory(library)
+include(./library/CMakeLists.txt)
 
 if(IS_ROS)  
   add_subdirectory("${CMAKE_BINARY_DIR}/../../root/git_hooks" "${CMAKE_CURRENT_BINARY_DIR}/.hooks")
