@@ -348,6 +348,9 @@ inline std::string stringify(const char* arg)
   return ss.str();
 }
 
+template <class T>
+std::string stringify(bool isLiteral, std::string name, T arg, bool isLastValue = false);
+
 #ifdef EIGEN_MATRIX_H
 // beginning of special output handling for Eigen Matrixes
 const std::string FILLER = "\t\t\t\t\t";
@@ -365,9 +368,6 @@ inline std::string stringify(Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _Max
   return ss.str();
 }
 
-template <class T>
-std::string stringify(bool isLiteral, std::string name, T arg, bool isLastValue = false);
-
 // create a new line before a matrix
 template <typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
 inline std::string stringify(bool isLiteral, std::string name,
@@ -384,7 +384,7 @@ inline std::string stringify(bool isLiteral, std::string name,
 #endif  // EIGEN_MATRIX_H
 
 template <class T>
-inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLastValue = false)
+inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLastValue)
 {
   std::stringstream ss;
   if (isLiteral)
