@@ -43,7 +43,7 @@ if (IS_ROS)
   
   catkin_package(
     INCLUDE_DIRS library/include
-    LIBRARIES ${PROJECT_NAME}_lib
+    LIBRARIES ${PROJECT_NAME}
   )
   
   #include_directories(
