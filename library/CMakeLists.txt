@@ -16,24 +16,22 @@ set(headers
   include/aduulm_logger/aduulm_logger.hpp
 )
   
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-  include
-#  library/include/${PROJECT_NAME}
-  ${catkin_INCLUDE_DIRS}
-#  ${Boost_INCLUDE_DIRS}
-)
-
 ## Declare a C++ library
 add_library(${PROJECT_NAME} STATIC
   ${sources}
+  ${headers}
+)
+
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+target_include_directories(${PROJECT_NAME}
+  PUBLIC include
+  ${catkin_INCLUDE_DIRS}
 )
 
 # Install things at the end
 if(IS_ADTF)
-  #add_dependencies(${PROJECT_NAME} ${TARGET_DEPENDENCIES} )
+	#add_dependencies(${PROJECT_NAME} ${TARGET_DEPENDENCIES} )
   #target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_DEPENDENCIES})
   install(TARGETS ${PROJECT_NAME} DESTINATION lib)
   if (${INSTALL_HEADERS})
