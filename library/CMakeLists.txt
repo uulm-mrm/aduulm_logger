@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
-project(aduulm_logger)
 
 ## status logging
-message("${ColourBoldBlue}${PROJECT_NAME}::library${ColourReset}")
+message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME}::library ${ColourReset}")
 
 ## options for compiler
 #add_compile_options(-std=c++11 -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter)
