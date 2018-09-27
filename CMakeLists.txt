@@ -27,16 +27,17 @@ endif()
 
 # Get version string to c++
 execute_process(COMMAND sh -c "grep \"<name>\" package.xml | sed -e 's+ *<name>\\(.*\\)</name>+\\1+'"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE package_name
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(COMMAND sh -c "grep \"<version>\" package.xml | sed -e 's+ *<version>\\(.*\\)</version>+\\1+'"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE package_version
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
 add_definitions("-D${package_name}_v=\"${package_version}\"")
 message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME} ${ColourReset}")
 
