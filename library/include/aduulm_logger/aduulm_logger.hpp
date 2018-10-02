@@ -4,8 +4,8 @@
  * @brief Remaps ADTF log commands to std::cout (as before) or ROS.
  * Remapping to ROS if built with -DHAVE_LOG
  */
-#ifndef _LOGGER_H_
-#define _LOGGER_H_
+#if !defined(_ADUULM_LOGGER_H_) and !defined(_LOGGER_H_) // Guard aduulm_logger from being included if Defines/Logger is already included in project and vice a versa
+#define _ADUULM_LOGGER_H_
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #include <ros/ros.h>
@@ -138,12 +138,10 @@ __inline__ std::thread::id thread_id()
     if (g_log_level >= 1)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
-      std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id()           \
-                << std::dec << ")" << LOG_RED << std::setw(9) << " ERROR " << LOG_NORMAL << _LOG_BASE << ": "          \
-                << LOG_RED << expr << LOG_NORMAL << std::endl;                                                         \
-      g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
-              << ")" << std::setw(9) << " ERROR " << _LOG_BASE << ": " << expr << std::endl;                           \
+      CheckLogCnt(); \
+      std::cout << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
+      << LOG_NORMAL << std::endl;                     \
+      g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl; \
     }                                                                                                                  \
   }
 #endif
@@ -155,11 +153,9 @@ __inline__ std::thread::id thread_id()
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
       CheckLogCnt();                                                                                                   \
-      std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id()           \
-                << std::dec << ")" << LOG_YELLOW << std::setw(9) << " WARNING " << LOG_NORMAL << _LOG_BASE << ": "     \
-                << LOG_YELLOW << expr << LOG_NORMAL << std::endl;                                                      \
-      g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
-              << ")" << std::setw(9) << " WARNING " << _LOG_BASE << ": " << expr << std::endl;                         \
+      std::cout << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
+            << LOG_NORMAL << std::endl;                     \
+            g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl; \
     }                                                                                                                  \
   }
 #else
@@ -172,12 +168,10 @@ __inline__ std::thread::id thread_id()
     if (g_log_level >= 3)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
-      std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id()           \
-                << std::dec << ")" << LOG_GREEN << std::setw(9) << " INFO " << LOG_NORMAL << _LOG_BASE << ": "         \
-                << LOG_GREEN << expr << LOG_NORMAL << std::endl;                                                       \
-      g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
-              << ")" << std::setw(9) << " INFO " << _LOG_BASE << ": " << expr << std::endl;                            \
+      CheckLogCnt();  \
+      std::cout << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
+            << LOG_NORMAL << std::endl;                     \
+            g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl; \
     }                                                                                                                  \
   }
 #else
@@ -190,12 +184,10 @@ __inline__ std::thread::id thread_id()
     if (g_log_level >= 4)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
-      std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id()           \
-                << std::dec << ")" << LOG_CYAN << std::setw(9) << " DEBUG " << LOG_NORMAL << _LOG_BASE << ": "         \
-                << LOG_CYAN << expr << LOG_NORMAL << std::endl;                                                        \
-      g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
-              << ")" << std::setw(9) << " DEBUG " << _LOG_BASE << ": " << expr << std::endl;                           \
+      CheckLogCnt();    \
+      std::cout << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
+            << LOG_NORMAL << std::endl;                     \
+            g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;\
     }                                                                                                                  \
   }
 #else
@@ -227,6 +219,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr)                                                                                                 \
   {                                                                                                                    \
     std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
+    LOG_WARN("Use of LOG_VERB() is deprecated, please use LOG_DEB() instead."); \
     CheckLogCnt();                                                                                                     \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                         \
@@ -498,7 +491,7 @@ inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLas
 #endif
 #endif  // DISABLE_LOG_VAR
 
-#endif  // _LOGGER_H_
+#endif  // _ADUULM_LOGGER_H_
 
 /**
  * @}
