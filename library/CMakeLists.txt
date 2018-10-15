@@ -38,8 +38,16 @@ if(IS_ADTF)
 	  FILES_MATCHING PATTERN "*.h")
   endif()
 elseif(IS_ROS)
+  install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 
+# Mark cpp header files for installation
+  install(DIRECTORY library/include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  )
 else()
   message("${ColourYellow}Library is not installed since no framework (ROS/ADTF) is given.${ColourReset}")
 endif()
-
