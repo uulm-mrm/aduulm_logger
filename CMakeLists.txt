@@ -45,8 +45,11 @@ if (IS_ROS)
   # ROS node
   include(./ros/CMakeLists.txt)
   
-  if(IS_ROS)  
-    add_subdirectory("${CMAKE_BINARY_DIR}/../../root/git_hooks" "${CMAKE_CURRENT_BINARY_DIR}/.hooks")
+  set(HOOKS_PATH "${CMAKE_BINARY_DIR}/../../root/git_hooks")
+  if(EXISTS "${HOOKS_PATH}")
+    add_subdirectory("${HOOKS_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/.hooks")
+  else()
+    message(WARNING "Could not find git hooks. Git hooks are not active.")
   endif()
 
 elseif(IS_ADTF)
