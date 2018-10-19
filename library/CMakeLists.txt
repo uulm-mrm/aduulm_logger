@@ -16,7 +16,7 @@ set(headers
 )
   
 ## Declare a C++ library
-add_library(${PROJECT_NAME} #STATIC
+add_library(${PROJECT_NAME} SHARED
   ${sources}
   ${headers}
 )
