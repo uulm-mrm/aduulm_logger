@@ -3,9 +3,6 @@ cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
 ## status logging
 message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME}::library ${ColourReset}")
 
-## options for compiler
-#add_compile_options(-std=c++11 -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter)
-
 ## Specify variables containing the src files of the different targets
 set(sources
   library/src/aduulm_logger.cpp
@@ -20,6 +17,8 @@ add_library(${PROJECT_NAME} SHARED
   ${sources}
   ${headers}
 )
+
+target_compile_options(${PROJECT_NAME} PUBLIC "-std=c++14")
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations

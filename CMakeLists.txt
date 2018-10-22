@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(aduulm_logger)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-#add_compile_options(-std=c++14 -fPIC)
-
 # colour support
 if (NOT WIN32)
   string(ASCII 27 Esc)
