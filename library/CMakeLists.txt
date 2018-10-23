@@ -28,7 +28,17 @@ target_include_directories(${PROJECT_NAME}
 )
 
 # Install things at the end
-if(IS_ADTF)
+if(IS_ROS)
+  install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+  # Mark cpp header files for installation
+  install(DIRECTORY library/include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  )
+else()
 	#add_dependencies(${PROJECT_NAME} ${TARGET_DEPENDENCIES} )
   #target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_DEPENDENCIES})
   install(TARGETS ${PROJECT_NAME} DESTINATION lib)
@@ -36,17 +46,7 @@ if(IS_ADTF)
 	install(DIRECTORY include/ DESTINATION include
 	  FILES_MATCHING PATTERN "*.h")
   endif()
-elseif(IS_ROS)
-  install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
 
-# Mark cpp header files for installation
-  install(DIRECTORY library/include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  )
 else()
   message("${ColourYellow}Library is not installed since no framework (ROS/ADTF) is given.${ColourReset}")
 endif()
