@@ -39,14 +39,11 @@ if(IS_ROS)
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   )
 else()
-	#add_dependencies(${PROJECT_NAME} ${TARGET_DEPENDENCIES} )
+  #add_dependencies(${PROJECT_NAME} ${TARGET_DEPENDENCIES} )
   #target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_DEPENDENCIES})
   install(TARGETS ${PROJECT_NAME} DESTINATION lib)
   if (${INSTALL_HEADERS})
-	install(DIRECTORY include/ DESTINATION include
-	  FILES_MATCHING PATTERN "*.h")
+  install(DIRECTORY include/ DESTINATION include
+    FILES_MATCHING PATTERN "*.h")
   endif()
-
-else()
-  message("${ColourYellow}Library is not installed since no framework (ROS/ADTF) is given.${ColourReset}")
 endif()
