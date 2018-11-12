@@ -4,7 +4,8 @@
  * @brief Remaps ADTF log commands to std::cout (as before) or ROS.
  * Remapping to ROS if built with -DHAVE_LOG
  */
-#if !defined(_ADUULM_LOGGER_H_) and !defined(_LOGGER_H_) // Guard aduulm_logger from being included if Defines/Logger is already included in project and vice a versa
+#if !defined(_ADUULM_LOGGER_H_) and !defined(_LOGGER_H_)  // Guard aduulm_logger from being included if Defines/Logger
+                                                          // is already included in project and vice a versa
 #define _ADUULM_LOGGER_H_
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
@@ -40,6 +41,7 @@ extern std::ofstream g_oFile;  // = std::ofstream();
 extern std::string g_file_name;
 extern uint16_t g_log_level;  // = 2;
 extern std::string aduulm_logger_VERSION_ext;
+extern bool g_log_to_file;
 static int g_nLogCount = 0;
 static int g_nLogNr = 0;
 __inline void CheckLogCnt()
@@ -54,7 +56,7 @@ __inline void CheckLogCnt()
     g_nLogCount = 0;
   }
 }
-extern inline bool initLogger(std::string file_name, uint16_t log_level);
+extern inline bool initLogger(std::string file_name, uint16_t log_level, bool log_to_file = true);
 extern inline bool initLogger();
 
 /** use it remove all the directories from __FILE__. */
@@ -92,8 +94,15 @@ __inline__ std::string longTime()
   int64_t _ntm_us =
       _nUSSinceDay - ((_tmBrokenTime.tm_hour * 3600 + _tmBrokenTime.tm_min * 60 + _tmBrokenTime.tm_sec) * 1000000ULL);
   char buf[40];
-  sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", _tmBrokenTime.tm_year + 1900, _tmBrokenTime.tm_mon + 1,
-          _tmBrokenTime.tm_mday, _tmBrokenTime.tm_hour, _tmBrokenTime.tm_min, _tmBrokenTime.tm_sec, _ntm_us);
+  sprintf(buf,
+          "%04d-%02d-%02d %02d:%02d:%02d.%06ld",
+          _tmBrokenTime.tm_year + 1900,
+          _tmBrokenTime.tm_mon + 1,
+          _tmBrokenTime.tm_mday,
+          _tmBrokenTime.tm_hour,
+          _tmBrokenTime.tm_min,
+          _tmBrokenTime.tm_sec,
+          _ntm_us);
 
   return buf;
 }
@@ -134,62 +143,78 @@ __inline__ std::thread::id thread_id()
 
 #ifndef LOG_ERR
 #define LOG_ERR(expr)                                                                                                  \
-  do {                                                                                                                    \
+  do                                                                                                                   \
+  {                                                                                                                    \
     if (g_log_level >= 1)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt(); \
+      CheckLogCnt();                                                                                                   \
       std::cout << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
-      << LOG_NORMAL << std::endl;                     \
-      g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl; \
+                << LOG_NORMAL << std::endl;                                                                            \
+      if (g_log_to_file)                                                                                               \
+      {                                                                                                                \
+        g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+      }                                                                                                                \
     }                                                                                                                  \
-  } while(0)
+  } while (0)
 #endif
 
 #ifndef LOG_WARN
 #define LOG_WARN(expr)                                                                                                 \
-  do {                                                                                                                    \
+  do                                                                                                                   \
+  {                                                                                                                    \
     if (g_log_level >= 2)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
       CheckLogCnt();                                                                                                   \
-      std::cout << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
-            << LOG_NORMAL << std::endl;                     \
-            g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl; \
+      std::cout << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr       \
+                << LOG_NORMAL << std::endl;                                                                            \
+      if (g_log_to_file)                                                                                               \
+      {                                                                                                                \
+        g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+      }                                                                                                                \
     }                                                                                                                  \
-  } while(0)
+  } while (0)
 #else
 #define LOG_WARN(expr) ;
 #endif
 
 #ifndef LOG_INF
 #define LOG_INF(expr)                                                                                                  \
-  do {                                                                                                                    \
+  do                                                                                                                   \
+  {                                                                                                                    \
     if (g_log_level >= 3)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();  \
-      std::cout << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
-            << LOG_NORMAL << std::endl;                     \
-            g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl; \
+      CheckLogCnt();                                                                                                   \
+      std::cout << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
+                << LOG_NORMAL << std::endl;                                                                            \
+      if (g_log_to_file)                                                                                               \
+      {                                                                                                                \
+        g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+      }                                                                                                                \
     }                                                                                                                  \
-  } while(0)
+  } while (0)
 #else
 #define LOG_INF(expr) ;
 #endif
 
 #ifndef LOG_DEBUG
 #define LOG_DEB(expr)                                                                                                  \
-  do {                                                                                                                    \
+  do                                                                                                                   \
+  {                                                                                                                    \
     if (g_log_level >= 4)                                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();    \
-      std::cout << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
-            << LOG_NORMAL << std::endl;                     \
-            g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;\
+      CheckLogCnt();                                                                                                   \
+      std::cout << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr         \
+                << LOG_NORMAL << std::endl;                                                                            \
+      if (g_log_to_file)                                                                                               \
+      {                                                                                                                \
+        g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+      }                                                                                                                \
     }                                                                                                                  \
-  } while(0)
+  } while (0)
 #else
 #define LOG_DEB(expr) ;
 #endif
@@ -198,7 +223,8 @@ __inline__ std::thread::id thread_id()
 #ifdef LOG_TRACEING
 #ifndef LOG_TRACE
 #define LOG_TRACE(expr)                                                                                                \
-  do {                                                                                                                    \
+  do                                                                                                                   \
+  {                                                                                                                    \
     std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
     CheckLogCnt();                                                                                                     \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
@@ -206,7 +232,7 @@ __inline__ std::thread::id thread_id()
               << LOG_NORMAL << std::endl;                                                                              \
     g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec   \
             << ")" << std::setw(9) << " TRACE " << _LOG_BASE << ": " << expr << std::endl;                             \
-  } while(0)
+  } while (0)
 #endif
 #else
 #ifndef LOG_TRACE
@@ -217,15 +243,16 @@ __inline__ std::thread::id thread_id()
 #ifdef LOG_VERBOSE
 #ifndef LOG_VERB
 #define LOG_VERB(expr)                                                                                                 \
-  do {                                                                                                                    \
+  do                                                                                                                   \
+  {                                                                                                                    \
     std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
-    LOG_WARN("Use of LOG_VERB() is deprecated, please use LOG_DEB() instead."); \
+    LOG_WARN("Use of LOG_VERB() is deprecated, please use LOG_DEB() instead.");                                        \
     CheckLogCnt();                                                                                                     \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                         \
     g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec   \
             << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                           \
-  } while(0)
+  } while (0)
 #endif
 #else
 #ifndef LOG_VERB
@@ -233,13 +260,14 @@ __inline__ std::thread::id thread_id()
 #endif
 #endif
 
-extern inline bool initLogger(std::string file_name, uint16_t log_level)
+extern inline bool initLogger(std::string file_name, uint16_t log_level, bool log_to_file)
 {
   //	std::cout << "Test: " << file_name << log_level << std::endl;
   g_file_name = file_name;
   g_oFile.close();
   g_oFile.open(g_file_name);
   g_log_level = log_level;
+  g_log_to_file = log_to_file;
   LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
   //	LOG_INF("Logger initialized");
   return true;
@@ -363,7 +391,8 @@ inline std::string stringify(Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _Max
 
 // create a new line before a matrix
 template <typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-inline std::string stringify(bool isLiteral, std::string name,
+inline std::string stringify(bool isLiteral,
+                             std::string name,
                              Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> arg,
                              bool isLastValue = false)
 {
@@ -464,8 +493,17 @@ inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLas
 // MACRONAME is the macro to be called for printing the message
 #ifndef LOG_X_VAR
 #define LOG_X_VAR(MACRONAME, ...)                                                                                      \
-  GET_RIGHT_MACRO_OVERLOAD(__VA_ARGS__, LOG_X_VAR_10, LOG_X_VAR_9, LOG_X_VAR_8, LOG_X_VAR_7, LOG_X_VAR_6, LOG_X_VAR_5, \
-                           LOG_X_VAR_4, LOG_X_VAR_3, LOG_X_VAR_2, LOG_X_VAR_1)                                         \
+  GET_RIGHT_MACRO_OVERLOAD(__VA_ARGS__,                                                                                \
+                           LOG_X_VAR_10,                                                                               \
+                           LOG_X_VAR_9,                                                                                \
+                           LOG_X_VAR_8,                                                                                \
+                           LOG_X_VAR_7,                                                                                \
+                           LOG_X_VAR_6,                                                                                \
+                           LOG_X_VAR_5,                                                                                \
+                           LOG_X_VAR_4,                                                                                \
+                           LOG_X_VAR_3,                                                                                \
+                           LOG_X_VAR_2,                                                                                \
+                           LOG_X_VAR_1)                                                                                \
   (MACRONAME, __VA_ARGS__)
 #endif
 
