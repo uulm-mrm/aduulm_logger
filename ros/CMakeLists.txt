@@ -8,5 +8,5 @@ find_package(catkin REQUIRED
 
 catkin_package(
   INCLUDE_DIRS library/include ${catkin_INCLUDE_DIRS}
-  LIBRARIES ${PROJECT_NAME}
+  LIBRARIES ${PROJECT_NAME} ${catkin_LIBRARIES}
 )
