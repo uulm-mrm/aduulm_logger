@@ -18,18 +18,20 @@ add_library(${PROJECT_NAME} SHARED
   ${headers}
 )
 
-target_compile_options(${PROJECT_NAME} PUBLIC "-std=c++14")
+target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14")
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 target_include_directories(${PROJECT_NAME}
-  PUBLIC library/include
-  ${catkin_INCLUDE_DIRS}
+  PUBLIC 
+    library/include
+    ${catkin_INCLUDE_DIRS}
 )
 
 # Install things at the end
 if(IS_ROS)
   install(TARGETS ${PROJECT_NAME}
+    INCLUDES DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
