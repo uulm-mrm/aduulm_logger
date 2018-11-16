@@ -38,24 +38,16 @@ execute_process(COMMAND sh -c "grep \"<version>\" package.xml | sed -e 's+ *<ver
 add_definitions("-D${package_name}_v=\"${package_version}\"")
 message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME} ${ColourReset}")
 
+add_subdirectory(library)
+
 if (IS_ROS)
   # ROS node
   include(./ros/CMakeLists.txt)
-  
-  set(HOOKS_PATH "${CMAKE_BINARY_DIR}/../../root/git_hooks")
-  if(EXISTS "${HOOKS_PATH}")
-    add_subdirectory("${HOOKS_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/.hooks")
-  else()
-    message(WARNING "Could not find git hooks. Git hooks are not active.")
-  endif()
 
 elseif(IS_ADTF)
   # ADTF Node
 
 endif()
-
-# Library (in this case needs to be built last!
-include(./library/CMakeLists.txt)
 
 #message("${catkin_INCLUDE_DIRS}")
 #message("${catkin_LIBRARIES}")

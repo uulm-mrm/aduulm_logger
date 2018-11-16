@@ -1,51 +1,82 @@
 cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
+project(aduulm_logger_lib)
 
 ## status logging
 message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME}::library ${ColourReset}")
 
-## Specify variables containing the src files of the different targets
-set(sources
-  library/src/aduulm_logger.cpp
-)
+# we default to Release build type
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
 
-set(headers
-  library/include/aduulm_logger/aduulm_logger.hpp
-)
+set(INCLUDE_INSTALL_DIR include/ CACHE STRING "Path to installed include directory")
+set(LIB_INSTALL_DIR lib/ CACHE STRING "Path to installed lib directory")
+set(BIN_INSTALL_DIR bin/ CACHE STRING "Path to installed bin directory")
+
+# TARGETS
   
 ## Declare a C++ library
 add_library(${PROJECT_NAME} SHARED
-  ${sources}
-  ${headers}
+  src/aduulm_logger.cpp
 )
-
-target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14")
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 target_include_directories(${PROJECT_NAME}
   PUBLIC 
-    library/include
-    ${catkin_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
 )
 
-# Install things at the end
+message("${${catkin_LIBRARIES}}")
+
 if(IS_ROS)
-  install(TARGETS ${PROJECT_NAME}
-    INCLUDES DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
-  # Mark cpp header files for installation
-  install(DIRECTORY library/include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  )
-else()
-  #add_dependencies(${PROJECT_NAME} ${TARGET_DEPENDENCIES} )
-  #target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_DEPENDENCIES})
-  install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-  if (${INSTALL_HEADERS})
-  install(DIRECTORY include/ DESTINATION include
-    FILES_MATCHING PATTERN "*.h")
-  endif()
+  find_package(catkin REQUIRED COMPONENTS roscpp)
+  target_include_directories(${PROJECT_NAME} PUBLIC ${catkin_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
+  set(EXTRA_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
+  set(EXTRA_LIBRARIES ${catkin_LIBRARIES})
 endif()
+
+target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14")
+
+# INSTALLATION
+
+set(PACKAGE_LIBRARY_VERSION "${package_version}")
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION "${PACKAGE_LIBRARY_VERSION}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}Targets
+  INCLUDES DESTINATION ${INCLUDE_INSTALL_DIR}
+  LIBRARY DESTINATION ${LIB_INSTALL_DIR} COMPONENT Runtime
+  ARCHIVE DESTINATION ${LIB_INSTALL_DIR} COMPONENT Development
+  RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT Runtime
+  PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR} COMPONENT Development
+  BUNDLE DESTINATION ${BIN_INSTALL_DIR} COMPONENT Runtime
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/config.cmake.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME}
+  PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR BIN_INSTALL_DIR EXTRA_INCLUDE_DIRS EXTRA_LIBRARIES
+)
+
+install(EXPORT ${PROJECT_NAME}Targets
+  DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME}
+  NAMESPACE ${PROJECT_NAME}::
+)
+# install CMake config and version file
+install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+              "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME})
+# install header files
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION ${INCLUDE_INSTALL_DIR})
