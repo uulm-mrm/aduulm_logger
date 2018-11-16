@@ -38,8 +38,6 @@ execute_process(COMMAND sh -c "grep \"<version>\" package.xml | sed -e 's+ *<ver
 add_definitions("-D${package_name}_v=\"${package_version}\"")
 message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME} ${ColourReset}")
 
-add_subdirectory(library)
-
 if (IS_ROS)
   # ROS node
   include(./ros/CMakeLists.txt)
@@ -48,6 +46,8 @@ elseif(IS_ADTF)
   # ADTF Node
 
 endif()
+
+add_subdirectory(library)
 
 #message("${catkin_INCLUDE_DIRS}")
 #message("${catkin_LIBRARIES}")
