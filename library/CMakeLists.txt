@@ -29,14 +29,15 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
 )
 
-message("${${catkin_LIBRARIES}}")
-
 if(IS_ROS)
   find_package(catkin REQUIRED COMPONENTS roscpp)
   target_include_directories(${PROJECT_NAME} PUBLIC ${catkin_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
   set(EXTRA_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
   set(EXTRA_LIBRARIES ${catkin_LIBRARIES})
+else()
+  set(EXTRA_INCLUDE_DIRS "")
+  set(EXTRA_LIBRARIES "")
 endif()
 
 target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14")
