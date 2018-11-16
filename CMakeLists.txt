@@ -41,13 +41,10 @@ message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME
 if (IS_ROS)
   # ROS node
   include(./ros/CMakeLists.txt)
-
-elseif(IS_ADTF)
-  # ADTF Node
-
 endif()
 
 add_subdirectory(library)
 
-#message("${catkin_INCLUDE_DIRS}")
-#message("${catkin_LIBRARIES}")
+if(NOT IS_ROS)
+  add_library(${PROJECT_NAME} ALIAS ${PROJECT_NAME}_lib)
+endif()
