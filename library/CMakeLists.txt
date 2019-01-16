@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
 project(aduulm_logger_lib)
 
-## status logging
-message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME}::library ${ColourReset}")
+# Get aduulm cmake macros for coloring, package_version extraction and find_aduulm_package()
+find_package(aduulm_cmake_tools REQUIRED)
+get_version_string_from_package_xml(.)
+show_build_info("library")
 
 # we default to Release build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -41,6 +43,7 @@ else()
 endif()
 
 target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14")
+target_compile_definitions(${PROJECT_NAME} PUBLIC "-D${package_name}_VERSION=\"${package_version}\"")
 
 # INSTALLATION
 

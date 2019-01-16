@@ -1,21 +1,18 @@
-message("${ColourBoldBlue}${package_name}(v. ${package_version})::${PROJECT_NAME}::ros ${ColourReset}")
+cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
+project(aduulm_logger)
 
 find_package(catkin REQUIRED
   roscpp
 )
 
+# Get aduulm cmake macros for coloring, package_version extraction and find_aduulm_package()
+find_package(aduulm_cmake_tools REQUIRED)
+get_version_string_from_package_xml(.)
+show_build_info("ros")
+
 catkin_package(
-  INCLUDE_DIRS
-    library/include
-  LIBRARIES
-    aduulm_logger_lib
   CFG_EXTRAS
     proj-extras.cmake
 )
 
-set(HOOKS_PATH "${CMAKE_BINARY_DIR}/../../root/git_hooks")
-if(EXISTS "${HOOKS_PATH}")
-  add_subdirectory("${HOOKS_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/.hooks")
-else()
-  message(WARNING "Could not find git hooks. Git hooks are not active.")
-endif()
+setup_git_hooks()
