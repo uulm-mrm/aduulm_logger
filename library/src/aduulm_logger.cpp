@@ -3,5 +3,5 @@
 std::ofstream g_oFile;
 std::string g_file_name;
 uint16_t g_log_level = 2;
-std::string aduulm_logger_VERSION_ext = aduulm_logger_v;
+std::string aduulm_logger_VERSION_ext = aduulm_logger_lib_VERSION;
 bool g_log_to_file = true;

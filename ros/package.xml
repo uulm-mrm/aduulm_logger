@@ -53,6 +53,7 @@
   <!-- Build dependencies -->
   <build_depend>rospy</build_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>aduulm_cmake_tools</build_depend>
 
   <!-- Execution dependencies -->
   <exec_depend>message_runtime</exec_depend>
@@ -62,6 +63,7 @@
 
   <!-- Common dependencies -->  
   <depend>roslib</depend>
+  <depend>aduulm_logger_lib</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
