@@ -5,6 +5,7 @@ project(aduulm_logger_lib)
 find_package(aduulm_cmake_tools REQUIRED)
 get_version_string_from_package_xml(.)
 show_build_info("library")
+setup_git_hooks()
 
 # we default to Release build type
 if(NOT CMAKE_BUILD_TYPE)
