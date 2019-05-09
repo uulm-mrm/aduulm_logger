@@ -36,15 +36,38 @@
 #define LOG_GRAY "\033[0;37m"
 #define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
+inline namespace aduulm_logger
+{
+namespace LoggerLevels
+{
+enum Level
+{
+  None,
+  Error,
+  Warn,
+  Info,
+  Debug
+};
+}
+typedef LoggerLevels::Level LoggerLevel;
+
 static std::mutex g_oLoggerMutex;
 extern std::ofstream g_oFile;  // = std::ofstream();
 extern std::string g_file_name;
-extern uint16_t g_log_level;  // = 2;
+extern LoggerLevel g_log_level;  // = Warn;
 extern std::string aduulm_logger_VERSION_ext;
 extern bool g_log_to_file;
 static int g_nLogCount = 0;
 static int g_nLogNr = 0;
-__inline void CheckLogCnt()
+
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+static const ros::console::Level level_mapping[] = { ros::console::levels::Error,
+                                                     ros::console::levels::Warn,
+                                                     ros::console::levels::Info,
+                                                     ros::console::levels::Debug };
+#endif
+
+inline void CheckLogCnt()
 {
   ++g_nLogCount;
   if (g_nLogCount > 100000)
@@ -56,8 +79,7 @@ __inline void CheckLogCnt()
     g_nLogCount = 0;
   }
 }
-extern inline bool initLogger(std::string file_name, uint16_t log_level, bool log_to_file = true);
-extern inline bool initLogger();
+}  // namespace aduulm_logger
 
 /** use it remove all the directories from __FILE__. */
 namespace DataTypesLogger
@@ -145,7 +167,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_ERR(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 1)                                                                                              \
+    if (g_log_level >= LoggerLevel::Error)                                                                             \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
       CheckLogCnt();                                                                                                   \
@@ -163,7 +185,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_WARN(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 2)                                                                                              \
+    if (g_log_level >= LoggerLevel::Warn)                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
       CheckLogCnt();                                                                                                   \
@@ -183,7 +205,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 3)                                                                                              \
+    if (g_log_level >= LoggerLevel::Info)                                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
       CheckLogCnt();                                                                                                   \
@@ -203,7 +225,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_DEB(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 4)                                                                                              \
+    if (g_log_level >= LoggerLevel::Debug)                                                                             \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
       CheckLogCnt();                                                                                                   \
@@ -259,25 +281,6 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr) ;
 #endif
 #endif
-
-extern inline bool initLogger(std::string file_name, uint16_t log_level, bool log_to_file)
-{
-  //	std::cout << "Test: " << file_name << log_level << std::endl;
-  g_file_name = file_name;
-  g_oFile.close();
-  g_oFile.open(g_file_name);
-  g_log_level = log_level;
-  g_log_to_file = log_to_file;
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
-  //	LOG_INF("Logger initialized");
-  return true;
-}
-extern inline bool initLogger()
-{
-  //  LOG_INF("Logger initialized");
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
-  return true;
-}
 
 // TODO: Implement
 #ifndef LOG_EVAL
@@ -528,6 +531,50 @@ inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLas
 #define LOG_VAR(...) LOG_INF_VAR(__VA_ARGS__);
 #endif
 #endif  // DISABLE_LOG_VAR
+
+inline namespace aduulm_logger
+{
+inline void setLogLevel(LoggerLevel log_level)
+{
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+  if (log_level > LoggerLevels::None)
+  {
+    if (log_level > LoggerLevels::Debug)
+    {
+      log_level = LoggerLevels::Debug;
+    }
+    auto lvl = level_mapping[log_level - 1];
+    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, lvl))
+    {
+      ros::console::notifyLoggerLevelsChanged();
+    }
+  }
+#endif
+  g_log_level = log_level;
+}
+
+inline bool initLogger(std::string file_name, LoggerLevel log_level, bool log_to_file)
+{
+  //	std::cout << "Test: " << file_name << log_level << std::endl;
+  g_file_name = file_name;
+  g_oFile.close();
+  g_oFile.open(g_file_name);
+  setLogLevel(log_level);
+  g_log_to_file = log_to_file;
+  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
+  //	LOG_INF("Logger initialized");
+  return true;
+}
+inline bool initLogger()
+{
+  //  LOG_INF("Logger initialized");
+  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
+
+  setLogLevel(g_log_level);
+  return true;
+}
+
+}  // namespace aduulm_logger
 
 #endif  // _ADUULM_LOGGER_H_
 
