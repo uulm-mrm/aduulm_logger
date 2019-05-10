@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 project(aduulm_logger_lib)
 
 # Get aduulm cmake macros for coloring, package_version extraction and find_aduulm_package()
@@ -19,23 +19,21 @@ set(BIN_INSTALL_DIR bin/ CACHE STRING "Path to installed bin directory")
 # TARGETS
   
 ## Declare a C++ library
-add_library(${PROJECT_NAME} SHARED
-  src/aduulm_logger.cpp
-)
+add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 target_include_directories(${PROJECT_NAME}
-  PUBLIC 
+  INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
 )
 
 if(IS_ROS)
   find_package(catkin REQUIRED COMPONENTS roscpp)
-  target_include_directories(${PROJECT_NAME} PUBLIC ${catkin_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} INTERFACE ${catkin_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} INTERFACE ${catkin_LIBRARIES})
   set(EXTRA_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
   set(EXTRA_LIBRARIES ${catkin_LIBRARIES})
 else()
@@ -43,8 +41,7 @@ else()
   set(EXTRA_LIBRARIES "")
 endif()
 
-target_compile_options(${PROJECT_NAME} PRIVATE "-std=c++14")
-target_compile_definitions(${PROJECT_NAME} PUBLIC "-D${package_name}_VERSION=\"${package_version}\"")
+target_compile_definitions(${PROJECT_NAME} INTERFACE "-D${package_name}_VERSION=\"${package_version}\"")
 
 # INSTALLATION
 
