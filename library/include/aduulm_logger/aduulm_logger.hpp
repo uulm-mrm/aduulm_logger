@@ -168,7 +168,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_ERR(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_log_level >= LoggerLevel::Error)                                                              \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Error)                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
       aduulm_logger::CheckLogCnt();                                                                                    \
@@ -187,7 +187,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_WARN(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_log_level >= LoggerLevel::Warn)                                                               \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Warn)                                                               \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
       aduulm_logger::CheckLogCnt();                                                                                    \
@@ -208,7 +208,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_log_level >= LoggerLevel::Info)                                                               \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Info)                                                               \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
       aduulm_logger::CheckLogCnt();                                                                                    \
@@ -229,7 +229,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_DEB(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_log_level >= LoggerLevel::Debug)                                                              \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Debug)                                                              \
     {                                                                                                                  \
       std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
       aduulm_logger::CheckLogCnt();                                                                                    \
