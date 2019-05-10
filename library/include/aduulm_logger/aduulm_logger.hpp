@@ -36,7 +36,7 @@
 #define LOG_GRAY "\033[0;37m"
 #define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
-inline namespace aduulm_logger
+namespace aduulm_logger
 {
 namespace LoggerLevels
 {
@@ -52,9 +52,10 @@ enum Level
 typedef LoggerLevels::Level LoggerLevel;
 
 static std::mutex g_oLoggerMutex;
-extern std::ofstream g_oFile;  // = std::ofstream();
+extern std::ofstream g_oFile;
 extern std::string g_file_name;
-extern LoggerLevel g_log_level;  // = Warn;
+extern LoggerLevel g_log_level;
+;
 extern std::string aduulm_logger_VERSION_ext;
 extern bool g_log_to_file;
 static int g_nLogCount = 0;
@@ -167,15 +168,16 @@ __inline__ std::thread::id thread_id()
 #define LOG_ERR(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= LoggerLevel::Error)                                                                             \
+    if (aduulm_logger::g_log_level >= LoggerLevel::Error)                                                              \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -185,15 +187,16 @@ __inline__ std::thread::id thread_id()
 #define LOG_WARN(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= LoggerLevel::Warn)                                                                              \
+    if (aduulm_logger::g_log_level >= LoggerLevel::Warn)                                                               \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr       \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -205,15 +208,16 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= LoggerLevel::Info)                                                                              \
+    if (aduulm_logger::g_log_level >= LoggerLevel::Info)                                                               \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -225,15 +229,16 @@ __inline__ std::thread::id thread_id()
 #define LOG_DEB(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= LoggerLevel::Debug)                                                                             \
+    if (aduulm_logger::g_log_level >= LoggerLevel::Debug)                                                              \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr         \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -247,13 +252,14 @@ __inline__ std::thread::id thread_id()
 #define LOG_TRACE(expr)                                                                                                \
   do                                                                                                                   \
   {                                                                                                                    \
-    std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
-    CheckLogCnt();                                                                                                     \
+    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
+    aduulm_logger::CheckLogCnt();                                                                                      \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << LOG_BLUE << std::setw(9) << " TRACE " << LOG_NORMAL << _LOG_BASE << ": " << LOG_BLUE << expr   \
               << LOG_NORMAL << std::endl;                                                                              \
-    g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec   \
-            << ")" << std::setw(9) << " TRACE " << _LOG_BASE << ": " << expr << std::endl;                             \
+    aduulm_logger::g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex                                \
+                           << DataTypesLogger::thread_id() << std::dec << ")" << std::setw(9) << " TRACE "             \
+                           << _LOG_BASE << ": " << expr << std::endl;                                                  \
   } while (0)
 #endif
 #else
@@ -267,13 +273,14 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
+    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
     LOG_WARN("Use of LOG_VERB() is deprecated, please use LOG_DEB() instead.");                                        \
-    CheckLogCnt();                                                                                                     \
+    aduulm_logger::CheckLogCnt();                                                                                      \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                         \
-    g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec   \
-            << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                           \
+    aduulm_logger::g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex                                \
+                           << DataTypesLogger::thread_id() << std::dec << ")" << std::setw(9) << " VERBOSE "           \
+                           << _LOG_BASE << ": " << expr << std::endl;                                                  \
   } while (0)
 #endif
 #else
@@ -532,7 +539,7 @@ inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLas
 #endif
 #endif  // DISABLE_LOG_VAR
 
-inline namespace aduulm_logger
+namespace aduulm_logger
 {
 inline void setLogLevel(LoggerLevel log_level)
 {
@@ -553,25 +560,29 @@ inline void setLogLevel(LoggerLevel log_level)
   g_log_level = log_level;
 }
 
-inline bool initLogger(std::string file_name, LoggerLevel log_level, bool log_to_file)
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Info
+#else
+#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
+#endif
+
+inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
+{
+  //  LOG_INF("Logger initialized");
+  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
+
+  setLogLevel(log_level);
+  return true;
+}
+
+inline bool initLogger(std::string file_name, LoggerLevel log_level = DEFAULT_LOG_LEVEL)
 {
   //	std::cout << "Test: " << file_name << log_level << std::endl;
   g_file_name = file_name;
   g_oFile.close();
   g_oFile.open(g_file_name);
-  setLogLevel(log_level);
-  g_log_to_file = log_to_file;
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
-  //	LOG_INF("Logger initialized");
-  return true;
-}
-inline bool initLogger()
-{
-  //  LOG_INF("Logger initialized");
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
-
-  setLogLevel(g_log_level);
-  return true;
+  g_log_to_file = true;
+  return initLogger(log_level);
 }
 
 }  // namespace aduulm_logger
