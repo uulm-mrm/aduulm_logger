@@ -20,6 +20,7 @@
 #include <thread>
 #include <mutex>
 #include <fstream>
+#include <array>
 
 #define UTC_TIME false
 
@@ -59,22 +60,23 @@ extern std::string aduulm_logger_VERSION;
 extern bool g_log_to_file;
 extern int g_nLogCount;
 extern int g_nLogNr;
+extern std::string g_stream_name;
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
-extern std::string g_stream_name;
-extern const ros::console::Level level_mapping[];
+extern const std::array<ros::console::Level, 5> level_mapping;
 #endif
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #define LOGGER_ROS_EXTRA_DEFINES                                                                                       \
   std::string __attribute__((visibility("hidden"))) g_stream_name = ROSCONSOLE_DEFAULT_NAME;                           \
-  const ros::console::Level __attribute__((visibility("hidden"))) level_mapping[] = { ros::console::levels::Fatal,     \
-                                                                                      ros::console::levels::Error,     \
-                                                                                      ros::console::levels::Warn,      \
-                                                                                      ros::console::levels::Info,      \
-                                                                                      ros::console::levels::Debug };
+  const std::array<ros::console::Level, 5> __attribute__((visibility("hidden")))                                       \
+      level_mapping = { ros::console::levels::Fatal,                                                                   \
+                        ros::console::levels::Error,                                                                   \
+                        ros::console::levels::Warn,                                                                    \
+                        ros::console::levels::Info,                                                                    \
+                        ros::console::levels::Debug };
 #else
-#define LOGGER_ROS_EXTRA_DEFINES
+#define LOGGER_ROS_EXTRA_DEFINES std::string __attribute__((visibility("hidden"))) g_stream_name = "default";
 #endif
 
 #define DEFINE_LOGGER_VARIABLES                                                                                        \
@@ -602,12 +604,10 @@ static inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
   return true;
 }
 
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
 static inline void setStreamName(std::string name)
 {
   g_stream_name = name;
 }
-#endif
 
 static inline bool initLogger(std::string file_name, LoggerLevel log_level = DEFAULT_LOG_LEVEL)
 {
