@@ -570,7 +570,6 @@ namespace aduulm_logger
 static inline void setLogLevel(LoggerLevel log_level)
 {
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
-  std::cout << log_level << std::endl;
   if (log_level >= LoggerLevels::None)  // should always be true, but just in case
   {
     if (log_level > LoggerLevels::Debug)  // should also not happen, just in case
