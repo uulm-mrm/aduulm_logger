@@ -41,8 +41,6 @@ else()
   set(EXTRA_LIBRARIES "")
 endif()
 
-target_compile_definitions(${PROJECT_NAME} INTERFACE "-D${package_name}_VERSION=\"${package_version}\"")
-
 # INSTALLATION
 
 set(PACKAGE_LIBRARY_VERSION "${package_version}")

@@ -56,7 +56,6 @@ extern std::mutex g_oLoggerMutex;
 extern std::ofstream g_oFile;
 extern std::string g_file_name;
 extern LoggerLevel g_log_level;
-extern std::string aduulm_logger_VERSION;
 extern bool g_log_to_file;
 extern int g_nLogCount;
 extern int g_nLogNr;
@@ -86,7 +85,6 @@ extern const std::array<ros::console::Level, 5> level_mapping;
   std::ofstream __attribute__((visibility("hidden"))) g_oFile;                                                         \
   std::string __attribute__((visibility("hidden"))) g_file_name;                                                       \
   LoggerLevel __attribute__((visibility("hidden"))) g_log_level = LoggerLevels::Warn;                                  \
-  std::string __attribute__((visibility("hidden"))) aduulm_logger_VERSION = aduulm_logger_lib_VERSION;                 \
   bool __attribute__((visibility("hidden"))) g_log_to_file = false;                                                    \
   int __attribute__((visibility("hidden"))) g_nLogCount = 0;                                                           \
   int __attribute__((visibility("hidden"))) g_nLogNr = 0;                                                              \
@@ -597,8 +595,7 @@ static inline void setLogLevel(LoggerLevel log_level)
 
 static inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
 {
-  //  LOG_INF("Logger initialized");
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION);
+  LOG_INF("Logger initialized");
 
   setLogLevel(log_level);
   return true;
