@@ -21,6 +21,9 @@
 #include <mutex>
 #include <fstream>
 #include <array>
+#include <vector>
+#include <boost/function.hpp>
+#include "boost/bind.hpp"
 
 #define UTC_TIME false
 
@@ -60,10 +63,30 @@ extern bool g_log_to_file;
 extern int g_nLogCount;
 extern int g_nLogNr;
 extern std::string g_stream_name;
+using LoggerInitCallback = boost::function<void(void)>;
+using LoggerLevelChangeCallback = boost::function<void(LoggerLevel log_level)>;
+using LoggerStreamNameChangeCallback = boost::function<void(std::string stream_name)>;
+extern std::vector<LoggerInitCallback> g_sublogger_init_callbacks;
+extern std::vector<LoggerLevelChangeCallback> g_sublogger_level_change_callbacks;
+extern std::vector<LoggerStreamNameChangeCallback> g_sublogger_stream_name_change_callbacks;
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 extern const std::array<ros::console::Level, 5> level_mapping;
 #endif
+
+static inline void CheckLogCnt()
+{
+  ++g_nLogCount;
+  if (g_nLogCount > 100000)
+  {
+    g_oFile.close();
+    std::string _strLogname = g_file_name + std::to_string(g_nLogNr) + ".log";
+    g_oFile.open(_strLogname);  //, std::ios_base::app);
+    ++g_nLogNr;
+    g_nLogCount = 0;
+  }
+}
+}  // namespace aduulm_logger
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #define LOGGER_ROS_EXTRA_DEFINES                                                                                       \
@@ -88,22 +111,95 @@ extern const std::array<ros::console::Level, 5> level_mapping;
   bool __attribute__((visibility("hidden"))) g_log_to_file = false;                                                    \
   int __attribute__((visibility("hidden"))) g_nLogCount = 0;                                                           \
   int __attribute__((visibility("hidden"))) g_nLogNr = 0;                                                              \
+  std::vector<LoggerInitCallback> __attribute__((visibility("hidden"))) g_sublogger_init_callbacks;                    \
+  std::vector<LoggerLevelChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_level_change_callbacks;     \
+  std::vector<LoggerStreamNameChangeCallback> __attribute__((visibility("hidden")))                                    \
+      g_sublogger_stream_name_change_callbacks;                                                                        \
   LOGGER_ROS_EXTRA_DEFINES                                                                                             \
   }
 
-static inline void CheckLogCnt()
-{
-  ++g_nLogCount;
-  if (g_nLogCount > 100000)
-  {
-    g_oFile.close();
-    std::string _strLogname = g_file_name + std::to_string(g_nLogNr) + ".log";
-    g_oFile.open(_strLogname);  //, std::ios_base::app);
-    ++g_nLogNr;
-    g_nLogCount = 0;
+#define LOGGER_ADD_SUBLOGGER_LIBRARY(_namespace)                                                                       \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back(_namespace::_initLogger);                                   \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(_namespace::_setLogLevel);                          \
+    aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(_namespace::_setStreamName);                  \
+  } while (0)
+
+#define LOGGER_ADD_SUBLOGGER_CLASS(_class, _instance)                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    aduulm_logger::g_sublogger_init_callbacks.push_back(boost::bind(&_class::_initLogger, _instance));                 \
+    aduulm_logger::g_sublogger_level_change_callbacks.push_back(boost::bind(&_class::_setLogLevel, _instance, _1));    \
+    aduulm_logger::g_sublogger_stream_name_change_callbacks.push_back(                                                 \
+        boost::bind(&_class::_setStreamName, _instance, _1));                                                          \
+  } while (0)
+
+#define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
+  void _initLogger();                                                                                                  \
+  void _setStreamName(std::string stream_name);                                                                        \
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level);
+
+#define DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION                                                                 \
+  void _initLogger()                                                                                                   \
+  {                                                                                                                    \
+    aduulm_logger::initLogger();                                                                                       \
+    for (auto callback : aduulm_logger::g_sublogger_init_callbacks)                                                    \
+    {                                                                                                                  \
+      callback();                                                                                                      \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setStreamName(std::string stream_name)                                                                         \
+  {                                                                                                                    \
+    aduulm_logger::setStreamName(stream_name);                                                                         \
+    for (auto callback : aduulm_logger::g_sublogger_stream_name_change_callbacks)                                      \
+    {                                                                                                                  \
+      callback(stream_name);                                                                                           \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level)                                                              \
+  {                                                                                                                    \
+    aduulm_logger::setLogLevel(log_level);                                                                             \
+    for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks)                                            \
+    {                                                                                                                  \
+      callback(log_level);                                                                                             \
+    }                                                                                                                  \
   }
-}
-}  // namespace aduulm_logger
+
+#define DEFINE_LOGGER_CLASS_INTERFACE_HEADER                                                                           \
+  void _initLogger();                                                                                                  \
+  void _setStreamName(std::string stream_name);                                                                        \
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level);
+
+#define DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(_class)                                                           \
+  void _class ::_initLogger()                                                                                          \
+  {                                                                                                                    \
+    aduulm_logger::initLogger();                                                                                       \
+    for (auto callback : aduulm_logger::g_sublogger_init_callbacks)                                                    \
+    {                                                                                                                  \
+      callback();                                                                                                      \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setStreamName(std::string stream_name)                                                                \
+  {                                                                                                                    \
+    aduulm_logger::setStreamName(stream_name);                                                                         \
+    for (auto callback : aduulm_logger::g_sublogger_stream_name_change_callbacks)                                      \
+    {                                                                                                                  \
+      callback(stream_name);                                                                                           \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setLogLevel(aduulm_logger::LoggerLevel log_level)                                                     \
+  {                                                                                                                    \
+    aduulm_logger::setLogLevel(log_level);                                                                             \
+    for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks)                                            \
+    {                                                                                                                  \
+      callback(log_level);                                                                                             \
+    }                                                                                                                  \
+  }
 
 /** use it remove all the directories from __FILE__. */
 namespace DataTypesLogger
