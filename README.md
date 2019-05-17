@@ -37,13 +37,14 @@ cmake_args:
 ```
 or
 ```cmake
-add_definitions(-DUSE_ROS_LOG)
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_ROS_LOG)
 ```
 
 * Add the package to your project (you should already have included the aduulm_cmake_tools):
 ```cmake
 find_aduulm_package(aduulm_logger_lib)
 ```
+
 * Link the logger to your target:
 ```cmake
 link_aduulm_package_targets(TARGET MY_TARGET_NAME
@@ -51,6 +52,11 @@ link_aduulm_package_targets(TARGET MY_TARGET_NAME
 	PACKAGE_TARGETS
 		aduulm_logger_lib::aduulm_logger_lib
 )
+```
+
+* If you use a library without ROS dependency, but the library is used by ROS packages, you can set `ROS_PACKAGE_NAME` so that it displays the real library name in `rqt_logger_level` instead of `ros.unknown_package`:
+```cmake
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DROS_PACKAGE_NAME="${PROJECT_NAME}")
 ```
 
 * To be able to use the logger, it needs to be initialized before the first usage: If you used the library/class setup macros, you can cann `_initLogger();`. Otherwise, you can call `aduulm_logger::initLogger()`. If the logger is used in non ROS mode (no flag set), it can be initialized with the optional parameters file_name and log_level `initLogger(std::string file_name, LoggerLevel log_level)`.
