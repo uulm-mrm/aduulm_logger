@@ -12,6 +12,8 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+find_package(Boost REQUIRED)
+
 set(INCLUDE_INSTALL_DIR include/ CACHE STRING "Path to installed include directory")
 set(LIB_INSTALL_DIR lib/ CACHE STRING "Path to installed lib directory")
 set(BIN_INSTALL_DIR bin/ CACHE STRING "Path to installed bin directory")
@@ -28,7 +30,10 @@ target_include_directories(${PROJECT_NAME}
   INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+    ${Boost_INCLUDE_DIRS}
 )
+
+target_link_libraries(${PROJECT_NAME} INTERFACE ${Boost_LIBRARIES})
 
 if(IS_ROS)
   find_package(catkin REQUIRED COMPONENTS roscpp)
