@@ -20,6 +20,10 @@
 #include <thread>
 #include <mutex>
 #include <fstream>
+#include <array>
+#include <vector>
+#include <boost/function.hpp>
+#include "boost/bind.hpp"
 
 #define UTC_TIME false
 
@@ -36,15 +40,41 @@
 #define LOG_GRAY "\033[0;37m"
 #define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
-static std::mutex g_oLoggerMutex;
-extern std::ofstream g_oFile;  // = std::ofstream();
+namespace aduulm_logger
+{
+namespace LoggerLevels
+{
+enum Level
+{
+  None,
+  Error,
+  Warn,
+  Info,
+  Debug
+};
+}
+typedef LoggerLevels::Level LoggerLevel;
+
+extern std::mutex g_oLoggerMutex;
+extern std::ofstream g_oFile;
 extern std::string g_file_name;
-extern uint16_t g_log_level;  // = 2;
-extern std::string aduulm_logger_VERSION_ext;
+extern LoggerLevel g_log_level;
 extern bool g_log_to_file;
-static int g_nLogCount = 0;
-static int g_nLogNr = 0;
-__inline void CheckLogCnt()
+extern int g_nLogCount;
+extern int g_nLogNr;
+extern std::string g_stream_name;
+using LoggerInitCallback = boost::function<void(void)>;
+using LoggerLevelChangeCallback = boost::function<void(LoggerLevel log_level)>;
+using LoggerStreamNameChangeCallback = boost::function<void(std::string stream_name)>;
+extern std::vector<LoggerInitCallback> g_sublogger_init_callbacks;
+extern std::vector<LoggerLevelChangeCallback> g_sublogger_level_change_callbacks;
+extern std::vector<LoggerStreamNameChangeCallback> g_sublogger_stream_name_change_callbacks;
+
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+extern const std::array<ros::console::Level, 5> level_mapping;
+#endif
+
+static inline void CheckLogCnt()
 {
   ++g_nLogCount;
   if (g_nLogCount > 100000)
@@ -56,8 +86,120 @@ __inline void CheckLogCnt()
     g_nLogCount = 0;
   }
 }
-extern inline bool initLogger(std::string file_name, uint16_t log_level, bool log_to_file = true);
-extern inline bool initLogger();
+}  // namespace aduulm_logger
+
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#define LOGGER_ROS_EXTRA_DEFINES                                                                                       \
+  std::string __attribute__((visibility("hidden"))) g_stream_name = ROSCONSOLE_DEFAULT_NAME;                           \
+  const std::array<ros::console::Level, 5> __attribute__((visibility("hidden")))                                       \
+      level_mapping = { ros::console::levels::Fatal,                                                                   \
+                        ros::console::levels::Error,                                                                   \
+                        ros::console::levels::Warn,                                                                    \
+                        ros::console::levels::Info,                                                                    \
+                        ros::console::levels::Debug };
+#else
+#define LOGGER_ROS_EXTRA_DEFINES std::string __attribute__((visibility("hidden"))) g_stream_name = "default";
+#endif
+
+#define DEFINE_LOGGER_VARIABLES                                                                                        \
+  namespace aduulm_logger                                                                                              \
+  {                                                                                                                    \
+  std::mutex __attribute__((visibility("hidden"))) g_oLoggerMutex;                                                     \
+  std::ofstream __attribute__((visibility("hidden"))) g_oFile;                                                         \
+  std::string __attribute__((visibility("hidden"))) g_file_name;                                                       \
+  LoggerLevel __attribute__((visibility("hidden"))) g_log_level = LoggerLevels::Warn;                                  \
+  bool __attribute__((visibility("hidden"))) g_log_to_file = false;                                                    \
+  int __attribute__((visibility("hidden"))) g_nLogCount = 0;                                                           \
+  int __attribute__((visibility("hidden"))) g_nLogNr = 0;                                                              \
+  std::vector<LoggerInitCallback> __attribute__((visibility("hidden"))) g_sublogger_init_callbacks;                    \
+  std::vector<LoggerLevelChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_level_change_callbacks;     \
+  std::vector<LoggerStreamNameChangeCallback> __attribute__((visibility("hidden")))                                    \
+      g_sublogger_stream_name_change_callbacks;                                                                        \
+  LOGGER_ROS_EXTRA_DEFINES                                                                                             \
+  }
+
+#define LOGGER_ADD_SUBLOGGER_LIBRARY(_namespace)                                                                       \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back(_namespace::_initLogger);                                   \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(_namespace::_setLogLevel);                          \
+    aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(_namespace::_setStreamName);                  \
+  } while (0)
+
+#define LOGGER_ADD_SUBLOGGER_CLASS(_class, _instance)                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back(boost::bind(&_class::_initLogger, _instance));              \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(boost::bind(&_class::_setLogLevel, _instance, _1)); \
+    aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
+        boost::bind(&_class::_setStreamName, _instance, _1));                                                          \
+  } while (0)
+
+#define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
+  void _initLogger();                                                                                                  \
+  void _setStreamName(std::string stream_name);                                                                        \
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level);
+
+#define DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION                                                                 \
+  void _initLogger()                                                                                                   \
+  {                                                                                                                    \
+    aduulm_logger::initLogger();                                                                                       \
+    for (auto callback : aduulm_logger::g_sublogger_init_callbacks)                                                    \
+    {                                                                                                                  \
+      callback();                                                                                                      \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setStreamName(std::string stream_name)                                                                         \
+  {                                                                                                                    \
+    aduulm_logger::setStreamName(stream_name);                                                                         \
+    for (auto callback : aduulm_logger::g_sublogger_stream_name_change_callbacks)                                      \
+    {                                                                                                                  \
+      callback(stream_name);                                                                                           \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level)                                                              \
+  {                                                                                                                    \
+    aduulm_logger::setLogLevel(log_level);                                                                             \
+    for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks)                                            \
+    {                                                                                                                  \
+      callback(log_level);                                                                                             \
+    }                                                                                                                  \
+  }
+
+#define DEFINE_LOGGER_CLASS_INTERFACE_HEADER                                                                           \
+  void _initLogger();                                                                                                  \
+  void _setStreamName(std::string stream_name);                                                                        \
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level);
+
+#define DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(_class)                                                           \
+  void _class ::_initLogger()                                                                                          \
+  {                                                                                                                    \
+    aduulm_logger::initLogger();                                                                                       \
+    for (auto callback : aduulm_logger::g_sublogger_init_callbacks)                                                    \
+    {                                                                                                                  \
+      callback();                                                                                                      \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setStreamName(std::string stream_name)                                                                \
+  {                                                                                                                    \
+    aduulm_logger::setStreamName(stream_name);                                                                         \
+    for (auto callback : aduulm_logger::g_sublogger_stream_name_change_callbacks)                                      \
+    {                                                                                                                  \
+      callback(stream_name);                                                                                           \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setLogLevel(aduulm_logger::LoggerLevel log_level)                                                     \
+  {                                                                                                                    \
+    aduulm_logger::setLogLevel(log_level);                                                                             \
+    for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks)                                            \
+    {                                                                                                                  \
+      callback(log_level);                                                                                             \
+    }                                                                                                                  \
+  }
 
 /** use it remove all the directories from __FILE__. */
 namespace DataTypesLogger
@@ -125,35 +267,39 @@ __inline__ std::thread::id thread_id()
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #ifndef LOG_ERR
-#define LOG_ERR(expr) ROS_ERROR_STREAM(_LOG_BASE << ": " << expr)
+#define LOG_ERR(expr) ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
 #endif
 
 #ifndef LOG_WARN
-#define LOG_WARN(expr) ROS_WARN_STREAM(_LOG_BASE << ": " << expr)
+#define LOG_WARN(expr) ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
 #endif
 
 #ifndef LOG_INF
-#define LOG_INF(expr) ROS_INFO_STREAM(_LOG_BASE << ": " << expr)
+#define LOG_INF(expr) ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
 #endif
 
 #ifndef LOG_DEB
-#define LOG_DEB(expr) ROS_DEBUG_STREAM(_LOG_BASE << ": " << expr)
+#define LOG_DEB(expr) ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+/* #define LOG_DEB(expr) do { ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr); std::cout
+ * << expr << " (" << &aduulm_logger::g_stream_name << ")" << std::endl; } while(0) */
 #endif
-#else
+
+#else  // IS_ROS
 
 #ifndef LOG_ERR
 #define LOG_ERR(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 1)                                                                                              \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Error)                                               \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -163,15 +309,16 @@ __inline__ std::thread::id thread_id()
 #define LOG_WARN(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 2)                                                                                              \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Warn)                                                \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr       \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -183,15 +330,16 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 3)                                                                                              \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Info)                                                \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -203,35 +351,37 @@ __inline__ std::thread::id thread_id()
 #define LOG_DEB(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (g_log_level >= 4)                                                                                              \
+    if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Debug)                                               \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                        \
-      CheckLogCnt();                                                                                                   \
+      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr         \
                 << LOG_NORMAL << std::endl;                                                                            \
-      if (g_log_to_file)                                                                                               \
+      if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
-        g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << std::endl;       \
+        aduulm_logger::g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                               << std::endl;                                                                           \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
 #else
 #define LOG_DEB(expr) ;
 #endif
-#endif
+#endif  // !IS_ROS
 
 #ifdef LOG_TRACEING
 #ifndef LOG_TRACE
 #define LOG_TRACE(expr)                                                                                                \
   do                                                                                                                   \
   {                                                                                                                    \
-    std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
-    CheckLogCnt();                                                                                                     \
+    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
+    aduulm_logger::CheckLogCnt();                                                                                      \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << LOG_BLUE << std::setw(9) << " TRACE " << LOG_NORMAL << _LOG_BASE << ": " << LOG_BLUE << expr   \
               << LOG_NORMAL << std::endl;                                                                              \
-    g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec   \
-            << ")" << std::setw(9) << " TRACE " << _LOG_BASE << ": " << expr << std::endl;                             \
+    aduulm_logger::g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex                                \
+                           << DataTypesLogger::thread_id() << std::dec << ")" << std::setw(9) << " TRACE "             \
+                           << _LOG_BASE << ": " << expr << std::endl;                                                  \
   } while (0)
 #endif
 #else
@@ -245,13 +395,14 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    std::lock_guard<std::mutex> _oLockLogger(g_oLoggerMutex);                                                          \
+    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
     LOG_WARN("Use of LOG_VERB() is deprecated, please use LOG_DEB() instead.");                                        \
-    CheckLogCnt();                                                                                                     \
+    aduulm_logger::CheckLogCnt();                                                                                      \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                         \
-    g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec   \
-            << ")" << std::setw(9) << " VERBOSE " << _LOG_BASE << ": " << expr << std::endl;                           \
+    aduulm_logger::g_oFile << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex                                \
+                           << DataTypesLogger::thread_id() << std::dec << ")" << std::setw(9) << " VERBOSE "           \
+                           << _LOG_BASE << ": " << expr << std::endl;                                                  \
   } while (0)
 #endif
 #else
@@ -259,25 +410,6 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr) ;
 #endif
 #endif
-
-extern inline bool initLogger(std::string file_name, uint16_t log_level, bool log_to_file)
-{
-  //	std::cout << "Test: " << file_name << log_level << std::endl;
-  g_file_name = file_name;
-  g_oFile.close();
-  g_oFile.open(g_file_name);
-  g_log_level = log_level;
-  g_log_to_file = log_to_file;
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
-  //	LOG_INF("Logger initialized");
-  return true;
-}
-extern inline bool initLogger()
-{
-  //  LOG_INF("Logger initialized");
-  LOG_INF("Using aduulm_logger version " << aduulm_logger_VERSION_ext);
-  return true;
-}
 
 // TODO: Implement
 #ifndef LOG_EVAL
@@ -528,6 +660,58 @@ inline std::string stringify(bool isLiteral, std::string name, T arg, bool isLas
 #define LOG_VAR(...) LOG_INF_VAR(__VA_ARGS__);
 #endif
 #endif  // DISABLE_LOG_VAR
+
+namespace aduulm_logger
+{
+static inline void setLogLevel(LoggerLevel log_level)
+{
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+  if (log_level >= LoggerLevels::None)  // should always be true, but just in case
+  {
+    if (log_level > LoggerLevels::Debug)  // should also not happen, just in case
+    {
+      log_level = LoggerLevels::Debug;
+    }
+    auto lvl = level_mapping[log_level];
+    if (ros::console::set_logger_level(std::string(ROSCONSOLE_DEFAULT_NAME) + "." + g_stream_name, lvl))
+    {
+      ros::console::notifyLoggerLevelsChanged();
+    }
+  }
+#endif
+  g_log_level = log_level;
+}
+
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Info
+#else
+#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
+#endif
+
+static inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
+{
+  LOG_INF("Logger initialized");
+
+  setLogLevel(log_level);
+  return true;
+}
+
+static inline void setStreamName(std::string name)
+{
+  g_stream_name = name;
+}
+
+static inline bool initLogger(std::string file_name, LoggerLevel log_level = DEFAULT_LOG_LEVEL)
+{
+  //	std::cout << "Test: " << file_name << log_level << std::endl;
+  g_file_name = file_name;
+  g_oFile.close();
+  g_oFile.open(g_file_name);
+  g_log_to_file = true;
+  return initLogger(log_level);
+}
+
+}  // namespace aduulm_logger
 
 #endif  // _ADUULM_LOGGER_H_
 
