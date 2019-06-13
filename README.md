@@ -76,7 +76,7 @@ This MR introduced several code generation macros:
 2. `DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER` and `DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION`: These two macros are to be used in shared libraries which want to use the logger. They declare and implement functions for initializing the logger and setting the logger level for that shared library. Example usage, extracted from the ros_package_creation script:
 
 ```diff
-// LoggerSetup.h
+// logger_setup.h
 #if !defined LIBRARY_NAME_LOGGER_SETUP_H
 #define LIBRARY_NAME_LOGGER_SETUP_H
 
@@ -91,8 +91,8 @@ namespace LIBRARY_NAME
 ```
 
 ```diff
-// LoggerSetup.cpp
-#include <LIBRARY_NAME/LoggerSetup.h>
+// logger_setup.cpp
+#include <LIBRARY_NAME/logger_setup.h>
 
 +DEFINE_LOGGER_VARIABLES
 
@@ -155,7 +155,7 @@ CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node
 ```diff
 // MY_NODE.cpp
 #include <PACKAGE_NAME/NODE_NAME.h>
-+#include <LIBRARY_NAME/LoggerSetup.h>
++#include <LIBRARY_NAME/logger_setup.h>
 
 DEFINE_LOGGER_VARIABLES
 
@@ -186,29 +186,39 @@ DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)
 
 Because the symbol visibility of the logger variables is restricted, linker errors may occur if the macros are not used as intended.
 
+* Undefined reference to logger variables
+
+```
+/home/user/aduulm_sandbox/devel/include/aduulm_logger/aduulm_logger.hpp:676: undefined reference to `aduulm_logger::g_stream_name[abi:cxx11]'
+/home/user/aduulm_sandbox/devel/include/aduulm_logger/aduulm_logger.hpp:682: undefined reference to `aduulm_logger::g_log_level'
+/home/user/aduulm_sandbox/devel/include/aduulm_logger/aduulm_logger.hpp:693: undefined reference to `aduulm_logger::g_stream_name[abi:cxx11]'
+```
+
+This means that the library or executable you tried to compile has not defined the logger variables with `DEFINE_LOGGER_VARIABLES`. Make sure you used `DEFINE_LOGGER_VARIABLES` inside a `.cpp` file and outside of any namespace. If that doesn't help, see the last point of this troubleshooting section for further debugging steps.
+
 * Multiple definitions: 
 
 ```
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.bss+0x0): multiple definition of `aduulm_logger::g_stream_name[abi:cxx11]'                                                                                  
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x0): multiple definition of `aduulm_logger::g_stream_name[abi:cxx11]'                                                                                  
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x0): first defined here               
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.data+0x0): multiple definition of `aduulm_logger::g_log_level'                                             
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.data+0x0): multiple definition of `aduulm_logger::g_log_level'                                             
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.data+0x10): first defined here                                                                                 
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.bss+0x60): multiple definition of `aduulm_logger::g_sublogger_init_callbacks'
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x60): multiple definition of `aduulm_logger::g_sublogger_init_callbacks'
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x60): first defined here                                                                        
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.rodata+0x50): multiple definition of `aduulm_logger::level_mapping'                                       
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.rodata+0x50): multiple definition of `aduulm_logger::level_mapping'                                       
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.rodata+0x100): first defined here                                                   
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.bss+0x40): multiple definition of `aduulm_logger::g_sublogger_level_change_callbacks'
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x40): multiple definition of `aduulm_logger::g_sublogger_level_change_callbacks'
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x40): first defined here                                                                 
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.bss+0x20): multiple definition of `aduulm_logger::g_sublogger_stream_name_change_callbacks[abi:cxx11]'
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x20): multiple definition of `aduulm_logger::g_sublogger_stream_name_change_callbacks[abi:cxx11]'
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x20): first defined here                                                                                                                            
-CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o:(.bss+0xc0): multiple definition of `aduulm_logger::g_oFile'                                      
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0xc0): multiple definition of `aduulm_logger::g_oFile'                                      
 CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0xc0): first defined here                             
 ```
 This most probably means that the logger variables were defined multiply inside one shared library or executable. You can debug this by checking which compilation units contain the definitions:
 
 ```bash
 $ find ~/aduulm_sandbox/build/machine_learning_lib/ -name "*.o" -exec bash -c 'echo $1; readelf -Ws $1 | grep g_nLogCount' shell {} \; | grep HIDDEN -B 1
-/home/user/aduulm_sandbox/build/machine_learning_lib/clustering_lib/CMakeFiles/clustering_lib.dir/src/LoggerSetup.cpp.o
+/home/user/aduulm_sandbox/build/machine_learning_lib/clustering_lib/CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o
    231: 000000000000007c     4 OBJECT  GLOBAL HIDDEN    31 _ZN13aduulm_logger11g_nLogCountE
 /home/user/aduulm_sandbox/build/machine_learning_lib/clustering_lib/CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o
    755: 000000000000007c     4 OBJECT  GLOBAL HIDDEN   132 _ZN13aduulm_logger11g_nLogCountE
@@ -223,7 +233,7 @@ So in this case, the clustering_lib has defined the logger variables in two diff
 collect2: error: ld returned 1 exit status
 ```
 
-This most probably means that one of the library your executable depends on has forgotten to define its logger variables and now the linkes tried to resolve its undefined references by linking to the logger variables of some other portion of your code. You can debug this by checking for shared libraries which have undefined references to logger variables:
+This most probably means that one of the libraries your executable depends on has forgotten to define its logger variables and now the linkes tried to resolve its undefined references by linking to the logger variables of some other portion of your code. You can debug this by checking for shared libraries which have undefined references to logger variables:
 
 ```bash
 $ find ~/aduulm_sandbox/build -name "*.so" -exec bash -c 'echo $1; readelf -Ws $1 | grep stream_name' shell {} \; | grep UND -B 1
