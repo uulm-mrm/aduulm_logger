@@ -59,15 +59,15 @@ link_aduulm_package_targets(TARGET MY_TARGET_NAME
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DROS_PACKAGE_NAME="${PROJECT_NAME}")
 ```
 
-* To be able to use the logger, it needs to be initialized before the first usage: If you used the library/class setup macros, you can cann `_initLogger();`. Otherwise, you can call `aduulm_logger::initLogger()`. If the logger is used in non ROS mode (no flag set), it can be initialized with the optional parameters file_name and log_level `initLogger(std::string file_name, LoggerLevel log_level)`.
+* To be able to use the logger, it needs to be initialized before the first usage: If you used the library/class setup macros, you can can call `_initLogger();`. Otherwise, you can call `aduulm_logger::initLogger()`. If the logger is used in non ROS mode (no flag set), it can be initialized with the optional parameters file_name and log_level `initLogger(std::string file_name, LoggerLevel log_level)`.
 
 * Example usage can be seen in the ros_example in the ros_template package (root/ros_template).
 
-* In contrast to the mrm logger a locking function is added to enable multithreaded usage. However this prevents from concurrent logging commands, but not from concurrent std::cout commands.
+* In contrast to the mrm logger, a locking function is added to enable multithreaded usage. However this prevents from concurrent logging commands, but not from concurrent std::cout commands.
 
 ## Internal workings (IMPORTANT, READ THIS BEFORE USAGE!)
 
-In [https://mrm-git.e-technik.uni-ulm.de/aduulm/source/ros/aduulm_logger/merge_requests/7](aduulm/source/ros/aduulm_logger!7), major changes to how the logger works were introduced. Before, it had a shared library in which the variables holding the logger level and other stuff were stored. One consequence of this was, that all libraries which were linked into a single executable or library shared the same logger level. Also, in ROS nodelets, all nodelets loaded in one nodelet manager shared the same logger levels. The MR improved this by storing the logger variables once per shared library or executable. This was achieved by setting a visibility attribute on the variables with `__attribute__((visibility("hidden")))`, which does not allow them to be linked outside of the shared library or executable that they are part of. They can be linked outside of static libraries, so one has to be careful when using static libraries, so that the logger variables are not multiply defined.
+In aduulm/source/ros/aduulm_logger!7, major changes to how the logger works were introduced. Before, it had a shared library in which the variables holding the logger level and other stuff were stored. One consequence of this was, that all libraries which were linked into a single executable or library shared the same logger level. Also, in ROS nodelets, all nodelets loaded in one nodelet manager shared the same logger levels. The MR improved this by storing the logger variables once per shared library or executable. This was achieved by setting a visibility attribute on the variables with `__attribute__((visibility("hidden")))`, which does not allow them to be linked outside of the shared library or executable that they are part of. They can be linked outside of static libraries, so one has to be careful when using static libraries, so that the logger variables are not multiply defined.
 
 This MR introduced several code generation macros:
 
@@ -164,7 +164,7 @@ namespace PACKAGE_NAME
 
 CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node_handle)
 {
-+  LOGGER_ADD_SUBLOGGER_LIBRARY(LIBRARY_NAME);
++  LOGGER_ADD_SUBLOGGER_LIBRARY(LIBRARY_NAME); // LIBRARY_NAME refers to the namespace in which the DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER macro was used
   // The following three function calls get forwarded to the library
   _setStreamName(ros::this_node::getName());
   _initLogger();
