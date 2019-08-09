@@ -266,6 +266,10 @@ __inline__ std::thread::id thread_id()
 // Set the default log level
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
+#ifndef LOG_FATAL
+#define LOG_FATAL(expr) ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#endif
+
 #ifndef LOG_ERR
 #define LOG_ERR(expr) ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
 #endif
@@ -285,6 +289,22 @@ __inline__ std::thread::id thread_id()
 #endif
 
 #else  // IS_ROS
+
+#ifndef LOG_FATAL
+#define LOG_FATAL(expr)                                                                                                \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
+    aduulm_logger::CheckLogCnt();                                                                                      \
+    std::cout << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
+              << LOG_NORMAL << std::endl;                                                                              \
+    if (aduulm_logger::g_log_to_file)                                                                                  \
+    {                                                                                                                  \
+      aduulm_logger::g_oFile << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
+                             << std::endl;                                                                             \
+    }                                                                                                                  \
+  } while (0)
+#endif
 
 #ifndef LOG_ERR
 #define LOG_ERR(expr)                                                                                                  \
