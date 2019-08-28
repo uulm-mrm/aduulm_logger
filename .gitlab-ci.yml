@@ -9,9 +9,9 @@ melodic-catkin_build-install:
     - cd $CI_PROJECT_DIR
     - build_repo_with_dependencies.sh gitlab_install
 
-# Tests for Kinetic without install
-kinetic-catkin_build-no_install:
-  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros-kinetic:latest
+# Tests for Melodic without install
+melodic-catkin_build-no_install:
+  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros-melodic:latest
   stage: build
   script:
     - cd $CI_PROJECT_DIR
