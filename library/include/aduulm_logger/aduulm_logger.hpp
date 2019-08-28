@@ -255,7 +255,7 @@ __inline__ std::thread::id thread_id()
 }  // namespace DataTypesLogger
 #define _LOG_BASE                                                                                                      \
   "(" << std::setw(24) << DataTypesLogger::simpleFileName(__FILE__) << ":" << std::setw(3) << __LINE__ << ") "         \
-      << std::setw(30) << __FUNCTION__ << "() "
+      << std::setw(30) << __FUNCTION__ << "() "  // NOLINT(bugprone-lambda-function-name)
 
 // Log Level:
 // 1 = ERR
