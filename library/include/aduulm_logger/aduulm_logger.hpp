@@ -55,7 +55,7 @@ enum Level
 }
 typedef LoggerLevels::Level LoggerLevel;
 
-extern std::mutex g_oLoggerMutex;
+extern std::recursive_mutex g_oLoggerMutex;
 extern std::ofstream g_oFile;
 extern std::string g_file_name;
 extern LoggerLevel g_log_level;
@@ -104,7 +104,7 @@ static inline void CheckLogCnt()
 #define DEFINE_LOGGER_VARIABLES                                                                                        \
   namespace aduulm_logger                                                                                              \
   {                                                                                                                    \
-  std::mutex __attribute__((visibility("hidden"))) g_oLoggerMutex;                                                     \
+  std::recursive_mutex __attribute__((visibility("hidden"))) g_oLoggerMutex;                                           \
   std::ofstream __attribute__((visibility("hidden"))) g_oFile;                                                         \
   std::string __attribute__((visibility("hidden"))) g_file_name;                                                       \
   LoggerLevel __attribute__((visibility("hidden"))) g_log_level = LoggerLevels::Warn;                                  \
@@ -312,7 +312,7 @@ __inline__ std::thread::id thread_id()
   {                                                                                                                    \
     if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Error)                                               \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr          \
                 << LOG_NORMAL << std::endl;                                                                            \
@@ -331,7 +331,7 @@ __inline__ std::thread::id thread_id()
   {                                                                                                                    \
     if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Warn)                                                \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr       \
                 << LOG_NORMAL << std::endl;                                                                            \
@@ -352,7 +352,7 @@ __inline__ std::thread::id thread_id()
   {                                                                                                                    \
     if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Info)                                                \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
                 << LOG_NORMAL << std::endl;                                                                            \
@@ -373,7 +373,7 @@ __inline__ std::thread::id thread_id()
   {                                                                                                                    \
     if (aduulm_logger::g_log_level >= aduulm_logger::LoggerLevel::Debug)                                               \
     {                                                                                                                  \
-      std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                         \
+      std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::cout << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr         \
                 << LOG_NORMAL << std::endl;                                                                            \
@@ -394,7 +394,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_TRACE(expr)                                                                                                \
   do                                                                                                                   \
   {                                                                                                                    \
-    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
+    std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                 \
     aduulm_logger::CheckLogCnt();                                                                                      \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
               << ")" << LOG_BLUE << std::setw(9) << " TRACE " << LOG_NORMAL << _LOG_BASE << ": " << LOG_BLUE << expr   \
@@ -415,7 +415,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_VERB(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    std::lock_guard<std::mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                           \
+    std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                 \
     LOG_WARN("Use of LOG_VERB() is deprecated, please use LOG_DEB() instead.");                                        \
     aduulm_logger::CheckLogCnt();                                                                                      \
     std::cout << "[" << DataTypesLogger::longTime() << "] (0x" << std::hex << DataTypesLogger::thread_id() << std::dec \
