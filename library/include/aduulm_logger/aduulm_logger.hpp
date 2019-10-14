@@ -299,15 +299,15 @@ __inline__ std::thread::id thread_id()
   {                                                                                                                    \
     std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                 \
     aduulm_logger::CheckLogCnt();                                                                                      \
-    std::stringstream msg;                                                                                             \
-    msg << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr              \
-        << LOG_NORMAL;                                                                                                 \
+    std::stringstream __msg_logger;                                                                                    \
+    __msg_logger << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr     \
+                 << LOG_NORMAL;                                                                                        \
     if (aduulm_logger::g_log_to_file)                                                                                  \
     {                                                                                                                  \
       aduulm_logger::g_oFile << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
                              << std::endl;                                                                             \
     }                                                                                                                  \
-    std::cout << msg.str() << std::endl;                                                                               \
+    std::cout << __msg_logger.str() << std::endl;                                                                      \
   } while (0)
 #endif
 
@@ -319,14 +319,15 @@ __inline__ std::thread::id thread_id()
     {                                                                                                                  \
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
-      std::stringstream msg;                                                                                           \
-      msg << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr << LOG_NORMAL; \
+      std::stringstream __msg_logger;                                                                                  \
+      __msg_logger << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr       \
+                   << LOG_NORMAL;                                                                                      \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
                                << std::endl;                                                                           \
       }                                                                                                                \
-      std::cout << msg.str() << std::endl;                                                                             \
+      std::cout << __msg_logger.str() << std::endl;                                                                    \
     }                                                                                                                  \
   } while (0)
 #endif
@@ -339,15 +340,15 @@ __inline__ std::thread::id thread_id()
     {                                                                                                                  \
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
-      std::stringstream msg;                                                                                           \
-      msg << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr             \
-          << LOG_NORMAL;                                                                                               \
+      std::stringstream __msg_logger;                                                                                  \
+      __msg_logger << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr    \
+                   << LOG_NORMAL;                                                                                      \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
                                << std::endl;                                                                           \
       }                                                                                                                \
-      std::cout << msg.str() << std::endl;                                                                             \
+      std::cout << __msg_logger.str() << std::endl;                                                                    \
     }                                                                                                                  \
   } while (0)
 #else
@@ -362,14 +363,14 @@ __inline__ std::thread::id thread_id()
     {                                                                                                                  \
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
-      std::stringstream msg;                                                                                           \
-      msg << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr              \
-          << LOG_NORMAL;                                                                                               \
+      std::stringstream __msg_logger;                                                                                  \
+      __msg_logger << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr     \
+                   << LOG_NORMAL;                                                                                      \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
                                << std::endl;                                                                           \
-        std::cout << msg.str() << std::endl;                                                                           \
+        std::cout << __msg_logger.str() << std::endl;                                                                  \
       }                                                                                                                \
     }                                                                                                                  \
   } while (0)
@@ -385,15 +386,15 @@ __inline__ std::thread::id thread_id()
     {                                                                                                                  \
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
-      std::stringstream msg;                                                                                           \
-      msg << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr               \
-          << LOG_NORMAL;                                                                                               \
+      std::stringstream __msg_logger;                                                                                  \
+      __msg_logger << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
+                   << LOG_NORMAL;                                                                                      \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
                                << std::endl;                                                                           \
       }                                                                                                                \
-      std::cout << msg.str() << std::endl;                                                                             \
+      std::cout << __msg_logger.str() << std::endl;                                                                    \
     }                                                                                                                  \
   } while (0)
 #else
