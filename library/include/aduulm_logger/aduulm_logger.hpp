@@ -129,10 +129,11 @@ static inline void CheckLogCnt()
 #define LOGGER_ADD_SUBLOGGER_CLASS(_class, _instance)                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    aduulm_logger::g_sublogger_init_callbacks.emplace_back(boost::bind(&_class::_initLogger, _instance));              \
-    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(boost::bind(&_class::_setLogLevel, _instance, _1)); \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back(boost::bind(&_class::_initLogger, boost::ref(_instance)));  \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
+        boost::bind(&_class::_setLogLevel, boost::ref(_instance), _1));                                                \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
-        boost::bind(&_class::_setStreamName, _instance, _1));                                                          \
+        boost::bind(&_class::_setStreamName, boost::ref(_instance), _1));                                              \
   } while (0)
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
