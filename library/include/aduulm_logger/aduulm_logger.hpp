@@ -285,11 +285,31 @@ __inline__ std::thread::id thread_id()
 
 #ifndef LOG_DEB
 #define LOG_DEB(expr) ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
-/* #define LOG_DEB(expr) do {
- * ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " <<
- * expr); std::cout
- * << expr << " (" << &aduulm_logger::g_stream_name << ")" << std::endl; }
- * while(0) */
+#endif
+
+#ifndef LOG_FATAL_THROTTLE
+#define LOG_FATAL_THROTTLE(period, expr)                                                                               \
+  ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#endif
+
+#ifndef LOG_ERR_THROTTLE
+#define LOG_ERR_THROTTLE(period, expr)                                                                                 \
+  ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#endif
+
+#ifndef LOG_WARN_THROTTLE
+#define LOG_WARN_THROTTLE(period, expr)                                                                                \
+  ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#endif
+
+#ifndef LOG_INF_THROTTLE
+#define LOG_INF_THROTTLE(period, expr)                                                                                 \
+  ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#endif
+
+#ifndef LOG_DEB_THROTTLE
+#define LOG_DEB_THROTTLE(period, expr)                                                                                 \
+  ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
 #endif
 
 #else  // IS_ROS
@@ -401,6 +421,28 @@ __inline__ std::thread::id thread_id()
 #else
 #define LOG_DEB(expr) ;
 #endif
+
+// Throttling is not currently supported for non-ROS environments.
+#ifndef LOG_FATAL_THROTTLE
+#define LOG_FATAL_THROTTLE(period, expr) LOG_FATAL(expr)
+#endif
+
+#ifndef LOG_ERR_THROTTLE
+#define LOG_ERR_THROTTLE(period, expr) LOG_ERR(expr)
+#endif
+
+#ifndef LOG_WARN_THROTTLE
+#define LOG_WARN_THROTTLE(period, expr) LOG_WARN(expr)
+#endif
+
+#ifndef LOG_INF_THROTTLE
+#define LOG_INF_THROTTLE(period, expr) LOG_INF(expr)
+#endif
+
+#ifndef LOG_DEB_THROTTLE
+#define LOG_DEB_THROTTLE(period, expr) LOG_DEB(expr)
+#endif
+
 #endif  // !IS_ROS
 
 #ifdef LOG_TRACEING
