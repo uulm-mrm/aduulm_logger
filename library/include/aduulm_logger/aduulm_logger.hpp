@@ -24,6 +24,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <unordered_map>
 
 #define UTC_TIME false
 
@@ -52,7 +53,13 @@ enum Level
   Info,
   Debug
 };
-}
+
+static const std::unordered_map<std::string, Level> conv_string_to_level = { { "None", Level::None },
+                                                                             { "Error", Level::Error },
+                                                                             { "Warning", Level::Warn },
+                                                                             { "Info", Level::Info },
+                                                                             { "Debug", Level::Debug } };
+}  // namespace LoggerLevels
 typedef LoggerLevels::Level LoggerLevel;
 
 extern std::recursive_mutex g_oLoggerMutex;
@@ -65,9 +72,11 @@ extern int g_nLogNr;
 extern std::string g_stream_name;
 using LoggerInitCallback = boost::function<void(void)>;
 using LoggerLevelChangeCallback = boost::function<void(LoggerLevel log_level)>;
+using LoggerLevelChangeCallbackStr = boost::function<void(std::string log_level_string)>;
 using LoggerStreamNameChangeCallback = boost::function<void(std::string stream_name)>;
 extern std::vector<LoggerInitCallback> g_sublogger_init_callbacks;
 extern std::vector<LoggerLevelChangeCallback> g_sublogger_level_change_callbacks;
+extern std::vector<LoggerLevelChangeCallbackStr> g_sublogger_level_change_callbacks_str;
 extern std::vector<LoggerStreamNameChangeCallback> g_sublogger_stream_name_change_callbacks;
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
@@ -113,6 +122,8 @@ static inline void CheckLogCnt()
   int __attribute__((visibility("hidden"))) g_nLogNr = 0;                                                              \
   std::vector<LoggerInitCallback> __attribute__((visibility("hidden"))) g_sublogger_init_callbacks;                    \
   std::vector<LoggerLevelChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_level_change_callbacks;     \
+  std::vector<LoggerLevelChangeCallbackStr> __attribute__((visibility("hidden")))                                      \
+      g_sublogger_level_change_callbacks_str;                                                                          \
   std::vector<LoggerStreamNameChangeCallback> __attribute__((visibility("hidden")))                                    \
       g_sublogger_stream_name_change_callbacks;                                                                        \
   LOGGER_ROS_EXTRA_DEFINES                                                                                             \
@@ -122,7 +133,10 @@ static inline void CheckLogCnt()
   do                                                                                                                   \
   {                                                                                                                    \
     aduulm_logger::g_sublogger_init_callbacks.emplace_back(_namespace::_initLogger);                                   \
-    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(_namespace::_setLogLevel);                          \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
+        static_cast<void (*)(aduulm_logger::LoggerLevel)>(_namespace::_setLogLevel));                                  \
+    aduulm_logger::g_sublogger_level_change_callbacks_str.emplace_back(                                                \
+        static_cast<void (*)(std::string)>(_namespace::_setLogLevel));                                                 \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(_namespace::_setStreamName);                  \
   } while (0)
 
@@ -130,8 +144,10 @@ static inline void CheckLogCnt()
   do                                                                                                                   \
   {                                                                                                                    \
     aduulm_logger::g_sublogger_init_callbacks.emplace_back(boost::bind(&_class::_initLogger, boost::ref(_instance)));  \
-    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
-        boost::bind(&_class::_setLogLevel, boost::ref(_instance), _1));                                                \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(boost::bind(                                        \
+        static_cast<void (_class::*)(aduulm_logger::LoggerLevel)>(&_class::_setLogLevel), boost::ref(_instance), _1)); \
+    aduulm_logger::g_sublogger_level_change_callbacks_str.emplace_back(                                                \
+        boost::bind(static_cast<void (_class::*)(std::string)>(&_class::_setLogLevel), boost::ref(_instance), _1));    \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
         boost::bind(&_class::_setStreamName, boost::ref(_instance), _1));                                              \
   } while (0)
@@ -139,7 +155,8 @@ static inline void CheckLogCnt()
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
   void _initLogger();                                                                                                  \
   void _setStreamName(std::string stream_name);                                                                        \
-  void _setLogLevel(aduulm_logger::LoggerLevel log_level);
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level);                                                             \
+  void _setLogLevel(std::string log_level_string);
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION                                                                 \
   void _initLogger()                                                                                                   \
@@ -167,12 +184,22 @@ static inline void CheckLogCnt()
     {                                                                                                                  \
       callback(log_level);                                                                                             \
     }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setLogLevel(std::string log_level_string)                                                                      \
+  {                                                                                                                    \
+    aduulm_logger::setLogLevel(log_level_string);                                                                      \
+    for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks_str)                                        \
+    {                                                                                                                  \
+      callback(log_level_string);                                                                                      \
+    }                                                                                                                  \
   }
 
 #define DEFINE_LOGGER_CLASS_INTERFACE_HEADER                                                                           \
   void _initLogger();                                                                                                  \
   void _setStreamName(std::string stream_name);                                                                        \
-  void _setLogLevel(aduulm_logger::LoggerLevel log_level);
+  void _setLogLevel(aduulm_logger::LoggerLevel log_level);                                                             \
+  void _setLogLevel(std::string log_level_string);
 
 #define DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(_class)                                                           \
   void _class ::_initLogger()                                                                                          \
@@ -199,6 +226,15 @@ static inline void CheckLogCnt()
     for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks)                                            \
     {                                                                                                                  \
       callback(log_level);                                                                                             \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setLogLevel(std::string log_level_string)                                                             \
+  {                                                                                                                    \
+    aduulm_logger::setLogLevel(log_level_string);                                                                      \
+    for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks_str)                                        \
+    {                                                                                                                  \
+      callback(log_level_string);                                                                                      \
     }                                                                                                                  \
   }
 
@@ -761,6 +797,12 @@ static inline void setLogLevel(LoggerLevel log_level)
   }
 #endif
   g_log_level = log_level;
+}
+
+static inline void setLogLevel(std::string log_level_string)
+{
+  auto log_level = LoggerLevels::conv_string_to_level.at(log_level_string);
+  setLogLevel(log_level);
 }
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
