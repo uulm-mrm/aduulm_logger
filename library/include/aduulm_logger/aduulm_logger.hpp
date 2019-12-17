@@ -806,16 +806,16 @@ static inline void setLogLevel(std::string log_level_string)
 }
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
-#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Info
+#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
 #else
 #define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
 #endif
 
 static inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
 {
-  LOG_INF("Logger initialized");
-
   setLogLevel(log_level);
+  LOG_DEB("Logger initialized");
+
   return true;
 }
 
