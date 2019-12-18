@@ -23,8 +23,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #define UTC_TIME false
 
@@ -427,8 +427,8 @@ __inline__ std::thread::id thread_id()
       {                                                                                                                \
         aduulm_logger::g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
                                << std::endl;                                                                           \
-        std::cout << __msg_logger.str() << std::endl;                                                                  \
       }                                                                                                                \
+      std::cout << __msg_logger.str() << std::endl;                                                                    \
     }                                                                                                                  \
   } while (0)
 #else
