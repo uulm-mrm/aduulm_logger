@@ -76,104 +76,104 @@ This MR introduced several code generation macros:
 2. `DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER` and `DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION`: These two macros are to be used in shared libraries which want to use the logger. They declare and implement functions for initializing the logger and setting the logger level for that shared library. Example usage, extracted from the ros_package_creation script:
 
 ```diff
-// logger_setup.h
-#if !defined LIBRARY_NAME_LOGGER_SETUP_H
-#define LIBRARY_NAME_LOGGER_SETUP_H
-
-#include <aduulm_logger/aduulm_logger.hpp>
-
-namespace LIBRARY_NAME
-{
+ // logger_setup.h
+ #if !defined LIBRARY_NAME_LOGGER_SETUP_H
+ #define LIBRARY_NAME_LOGGER_SETUP_H
+ 
+ #include <aduulm_logger/aduulm_logger.hpp>
+ 
+ namespace LIBRARY_NAME
+ {
 +DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER
-}  // namespace LIBRARY_NAME
-
-#endif  // !defined(LIBRARY_NAME_LOGGER_SETUP_H)
+ }  // namespace LIBRARY_NAME
+ 
+ #endif  // !defined(LIBRARY_NAME_LOGGER_SETUP_H)
 ```
 
 ```diff
-// logger_setup.cpp
-#include <LIBRARY_NAME/logger_setup.h>
-
+ // logger_setup.cpp
+ #include <LIBRARY_NAME/logger_setup.h>
+ 
 +DEFINE_LOGGER_VARIABLES
-
-namespace LIBRARY_NAME
-{
+ 
+ namespace LIBRARY_NAME
+ {
 +DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION
-}  // namespace LIBRARY_NAME
+ }  // namespace LIBRARY_NAME
 ```
 This should be everything that is required for a library. LIBRARY_NAME::_initLogger() can then be called from the library/executable that uses that library.
 
 3. `DEFINE_LOGGER_CLASS_INTERFACE_HEADER` and `DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION`: These two macros are to be used in libraries or executables which have a main class of which there is always an object available when the library/executable is used, e.g. ROS nodes or nodelets. They declare and implement class methods for initializing the logger and setting the logger level for that shared library/executable. Example usage, extracted from the ros_package_creation script:
 
 ```diff
-// MY_NODE.h
-#ifndef UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
-#define UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
-
-#include <ros/ros.h>
-#include "aduulm_logger/aduulm_logger.hpp"
-
-namespace PACKAGE_NAME
-{
-class CLASS_NAME
-{
-public:
-  CLASS_NAME(ros::NodeHandle, ros::NodeHandle);
-
+ // MY_NODE.h
+ #ifndef UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
+ #define UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
+ 
+ #include <ros/ros.h>
+ #include "aduulm_logger/aduulm_logger.hpp"
+ 
+ namespace PACKAGE_NAME
+ {
+ class CLASS_NAME
+ {
+ public:
+   CLASS_NAME(ros::NodeHandle, ros::NodeHandle);
+ 
 +  DEFINE_LOGGER_CLASS_INTERFACE_HEADER
-
-private:
-};
-}  // namespace PACKAGE_NAME
-
-#endif  // UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
+ 
+ private:
+ };
+ }  // namespace PACKAGE_NAME
+ 
+ #endif  // UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
 ```
 
 ```diff
-// MY_NODE.cpp
-#include <PACKAGE_NAME/NODE_NAME.h>
+ // MY_NODE.cpp
+ #include <PACKAGE_NAME/NODE_NAME.h>
 
 +DEFINE_LOGGER_VARIABLES
 
-namespace PACKAGE_NAME
-{
+ namespace PACKAGE_NAME
+ {
 
-CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node_handle)
-{
+ CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node_handle)
+ {
 +  _setStreamName(ros::this_node::getName());  // for ROS nodes
 +  _setStreamName(getName()); // for ROS nodelets
 +  _initLogger();
-}
-
+ }
+ 
 +DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)
-
-}  // namespace PACKAGE_NAME
+ 
+ }  // namespace PACKAGE_NAME
 ```
 
 4. `LOGGER_ADD_SUBLOGGER_LIBRARY` and `LOGGER_ADD_SUBLOGGER_CLASS`: These two macros can be used to control the logger levels of dependent libraries automatically, e.g. if the logger level of one library/executable is changed, the logger levels of other linked shared libraries can be adjusted automatically to the same level. Example usage, extracted from the ros_package_creation script:
 
 ```diff
-// MY_NODE.cpp
-#include <PACKAGE_NAME/NODE_NAME.h>
+ // MY_NODE.cpp
+ #include <PACKAGE_NAME/NODE_NAME.h>
 +#include <LIBRARY_NAME/logger_setup.h>
-
-DEFINE_LOGGER_VARIABLES
-
-namespace PACKAGE_NAME
-{
-
-CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node_handle)
-{
+ 
+ DEFINE_LOGGER_VARIABLES
+ 
+ namespace PACKAGE_NAME
+ {
+ 
+ CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node_handle)
+ {
 +  LOGGER_ADD_SUBLOGGER_LIBRARY(LIBRARY_NAME); // LIBRARY_NAME refers to the namespace in which the DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER macro was used
-  // The following three function calls get forwarded to the library
-  _setStreamName(ros::this_node::getName());
-  _initLogger();
-  _setLogLevel(aduulm_logger::LoggerLevels::Debug);
-}
-
-DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)
-
-}  // namespace PACKAGE_NAME
+   // The following three function calls get forwarded to the library
+   _setStreamName(ros::this_node::getName());
+   _initLogger();
+   _setLogLevel(aduulm_logger::LoggerLevels::Debug);
+ }
+ 
+ DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)
+ 
+ }  // namespace PACKAGE_NAME
 ```
 
 ### Simple message printer
