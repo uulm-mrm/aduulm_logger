@@ -132,9 +132,9 @@ This should be everything that is required for a library. LIBRARY_NAME::_initLog
 ```diff
  // MY_NODE.cpp
  #include <PACKAGE_NAME/NODE_NAME.h>
-
+ 
 +DEFINE_LOGGER_VARIABLES
-
+ 
  namespace PACKAGE_NAME
  {
 
