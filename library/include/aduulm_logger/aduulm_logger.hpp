@@ -116,7 +116,7 @@ static inline void CheckLogCnt()
   std::recursive_mutex __attribute__((visibility("hidden"))) g_oLoggerMutex;                                           \
   std::ofstream __attribute__((visibility("hidden"))) g_oFile;                                                         \
   std::string __attribute__((visibility("hidden"))) g_file_name;                                                       \
-  LoggerLevel __attribute__((visibility("hidden"))) g_log_level = LoggerLevels::Warn;                                  \
+  LoggerLevel __attribute__((visibility("hidden"))) g_log_level = DEFAULT_LOG_LEVEL;                                   \
   bool __attribute__((visibility("hidden"))) g_log_to_file = false;                                                    \
   int __attribute__((visibility("hidden"))) g_nLogCount = 0;                                                           \
   int __attribute__((visibility("hidden"))) g_nLogNr = 0;                                                              \
@@ -805,13 +805,18 @@ static inline void setLogLevel(std::string log_level_string)
   setLogLevel(log_level);
 }
 
+static inline LoggerLevel getLogLevel()
+{
+  return g_log_level;
+}
+
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
 #else
 #define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
 #endif
 
-static inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
+static inline bool initLogger(LoggerLevel log_level)
 {
   setLogLevel(log_level);
   LOG_DEB("Logger initialized");
@@ -819,12 +824,17 @@ static inline bool initLogger(LoggerLevel log_level = DEFAULT_LOG_LEVEL)
   return true;
 }
 
+static inline bool initLogger()
+{
+  return initLogger(getLogLevel());
+}
+
 static inline void setStreamName(std::string name)
 {
   g_stream_name = name;
 }
 
-static inline bool initLogger(std::string file_name, LoggerLevel log_level = DEFAULT_LOG_LEVEL)
+static inline bool initLogger(std::string file_name, LoggerLevel log_level)
 {
   //	std::cout << "Test: " << file_name << log_level << std::endl;
   g_file_name = file_name;
@@ -832,6 +842,11 @@ static inline bool initLogger(std::string file_name, LoggerLevel log_level = DEF
   g_oFile.open(g_file_name);
   g_log_to_file = true;
   return initLogger(log_level);
+}
+
+static inline bool initLogger(std::string file_name)
+{
+  return initLogger(file_name, getLogLevel());
 }
 
 }  // namespace aduulm_logger
