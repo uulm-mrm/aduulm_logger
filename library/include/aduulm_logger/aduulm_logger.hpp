@@ -79,10 +79,6 @@ extern std::vector<LoggerLevelChangeCallback> g_sublogger_level_change_callbacks
 extern std::vector<LoggerLevelChangeCallbackStr> g_sublogger_level_change_callbacks_str;
 extern std::vector<LoggerStreamNameChangeCallback> g_sublogger_stream_name_change_callbacks;
 
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
-extern const std::array<ros::console::Level, 5> level_mapping;
-#endif
-
 static inline void CheckLogCnt()
 {
   ++g_nLogCount;
@@ -98,14 +94,13 @@ static inline void CheckLogCnt()
 }  // namespace aduulm_logger
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
+static const std::array<ros::console::Level, 5> level_mapping = { ros::console::levels::Fatal,
+                                                                  ros::console::levels::Error,
+                                                                  ros::console::levels::Warn,
+                                                                  ros::console::levels::Info,
+                                                                  ros::console::levels::Debug };
 #define LOGGER_ROS_EXTRA_DEFINES                                                                                       \
-  std::string __attribute__((visibility("hidden"))) g_stream_name = ROSCONSOLE_DEFAULT_NAME;                           \
-  const std::array<ros::console::Level, 5> __attribute__((visibility("hidden")))                                       \
-      level_mapping = { ros::console::levels::Fatal,                                                                   \
-                        ros::console::levels::Error,                                                                   \
-                        ros::console::levels::Warn,                                                                    \
-                        ros::console::levels::Info,                                                                    \
-                        ros::console::levels::Debug };
+  std::string __attribute__((visibility("hidden"))) g_stream_name = ROSCONSOLE_DEFAULT_NAME;
 #else
 #define LOGGER_ROS_EXTRA_DEFINES std::string __attribute__((visibility("hidden"))) g_stream_name = "default";
 #endif
