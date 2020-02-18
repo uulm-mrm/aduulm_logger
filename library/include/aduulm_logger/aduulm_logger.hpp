@@ -430,7 +430,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF(expr) ;
 #endif
 
-#ifndef LOG_DEBUG
+#ifndef LOG_DEB
 #define LOG_DEB(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
