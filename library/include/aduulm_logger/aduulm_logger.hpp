@@ -811,17 +811,25 @@ static inline LoggerLevel getLogLevel()
 #define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
 #endif
 
-static inline bool initLogger(LoggerLevel log_level)
+static inline bool initLogger(LoggerLevel log_level, bool is_test = false)
 {
+#if defined(IS_ROS) || defined(USE_ROS_LOG)
+  if (is_test)
+  {
+    // This is required in unit tests that do not use ROS to be able to use throttled logging.
+    ros::Time::init();
+  }
+#endif
+
   setLogLevel(log_level);
   LOG_DEB("Logger initialized");
 
   return true;
 }
 
-static inline bool initLogger()
+static inline bool initLogger(bool is_test = false)
 {
-  return initLogger(getLogLevel());
+  return initLogger(getLogLevel(), is_test);
 }
 
 static inline void setStreamName(std::string name)
@@ -829,19 +837,19 @@ static inline void setStreamName(std::string name)
   g_stream_name = name;
 }
 
-static inline bool initLogger(std::string file_name, LoggerLevel log_level)
+static inline bool initLogger(std::string file_name, LoggerLevel log_level, bool is_test = false)
 {
   //	std::cout << "Test: " << file_name << log_level << std::endl;
   g_file_name = file_name;
   g_oFile.close();
   g_oFile.open(g_file_name);
   g_log_to_file = true;
-  return initLogger(log_level);
+  return initLogger(log_level, is_test);
 }
 
-static inline bool initLogger(std::string file_name)
+static inline bool initLogger(std::string file_name, bool is_test = false)
 {
-  return initLogger(file_name, getLogLevel());
+  return initLogger(file_name, getLogLevel(), is_test);
 }
 
 }  // namespace aduulm_logger
