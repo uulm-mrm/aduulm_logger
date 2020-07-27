@@ -6,7 +6,6 @@ melodic-catkin_build-install:
   image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros-melodic:latest
   stage: build
   script:
-    - cd $CI_PROJECT_DIR
     - build_repo_with_dependencies.sh gitlab_install
 
 # Tests for Melodic without install
@@ -14,5 +13,11 @@ melodic-catkin_build-no_install:
   image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros-melodic:latest
   stage: build
   script:
-    - cd $CI_PROJECT_DIR
     - build_repo_with_dependencies.sh gitlab_no_install
+
+# Tests for Unicar Melodic with Install
+unicar-melodic-catkin_build-install:
+  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/unicar-ros-melodic-ci:latest
+  stage: build
+  script:
+    - build_repo_with_dependencies.sh gitlab_install
