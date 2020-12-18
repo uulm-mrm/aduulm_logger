@@ -265,18 +265,18 @@ __inline__ std::string longTime()
   _nUSSinceDay += _tmBrokenTime.tm_min * 60ULL * 1000 * 1000;        // microseconds for the minutes today
   _nUSSinceDay += _tmBrokenTime.tm_sec * 1000ULL * 1000;             // microseconds for the seconds today
 
-  int64_t _ntm_us =
+  uint64_t _ntm_us =
       _nUSSinceDay - ((_tmBrokenTime.tm_hour * 3600 + _tmBrokenTime.tm_min * 60 + _tmBrokenTime.tm_sec) * 1000000ULL);
-  char buf[40];
+  char buf[100];
   sprintf(buf,
-          "%04d-%02d-%02d %02d:%02d:%02d.%06ld",
+          "%04d-%02d-%02d %02d:%02d:%02d.%06d",
           _tmBrokenTime.tm_year + 1900,
           _tmBrokenTime.tm_mon + 1,
           _tmBrokenTime.tm_mday,
           _tmBrokenTime.tm_hour,
           _tmBrokenTime.tm_min,
           _tmBrokenTime.tm_sec,
-          _ntm_us);
+          static_cast<int32_t>(_ntm_us));
 
   return buf;
 }
