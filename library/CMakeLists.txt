@@ -19,7 +19,7 @@ set(LIB_INSTALL_DIR lib/ CACHE STRING "Path to installed lib directory")
 set(BIN_INSTALL_DIR bin/ CACHE STRING "Path to installed bin directory")
 
 # TARGETS
-  
+
 ## Declare a C++ library
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
@@ -30,6 +30,9 @@ target_include_directories(${PROJECT_NAME}
   INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+)
+target_include_directories(${PROJECT_NAME}
+  SYSTEM INTERFACE
     ${Boost_INCLUDE_DIRS}
 )
 
@@ -37,7 +40,7 @@ target_link_libraries(${PROJECT_NAME} INTERFACE ${Boost_LIBRARIES})
 
 if(IS_ROS)
   find_package(catkin REQUIRED COMPONENTS roscpp)
-  target_include_directories(${PROJECT_NAME} INTERFACE ${catkin_INCLUDE_DIRS})
+  target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} INTERFACE ${catkin_LIBRARIES})
   set(EXTRA_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
   set(EXTRA_LIBRARIES ${catkin_LIBRARIES})
