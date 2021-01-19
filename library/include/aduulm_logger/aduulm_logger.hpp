@@ -137,14 +137,14 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
 #define LOGGER_ADD_SUBLOGGER_CLASS(_class, _instance)                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    auto& inst = _instance;                                                                                            \
-    aduulm_logger::g_sublogger_init_callbacks.emplace_back([&inst]() { inst._initLogger(); });                         \
+    auto* inst = &_instance;                                                                                           \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back([inst]() { inst->_initLogger(); });                         \
     aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
-        [&inst](aduulm_logger::LoggerLevel level) { inst._setLogLevel(level); });                                      \
+        [inst](aduulm_logger::LoggerLevel level) { inst->_setLogLevel(level); });                                      \
     aduulm_logger::g_sublogger_level_change_callbacks_str.emplace_back(                                                \
-        [&inst](std::string level) { inst._setLogLevel(level); });                                                     \
+        [inst](std::string level) { inst->_setLogLevel(level); });                                                     \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
-        [&inst](std::string name) { inst._setStreamName(name); });                                                     \
+        [inst](std::string name) { inst->_setStreamName(name); });                                                     \
   } while (0)
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
