@@ -35,6 +35,7 @@ target_include_directories(${PROJECT_NAME}
   SYSTEM INTERFACE
     ${Boost_INCLUDE_DIRS}
 )
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 
 target_link_libraries(${PROJECT_NAME} INTERFACE ${Boost_LIBRARIES})
 

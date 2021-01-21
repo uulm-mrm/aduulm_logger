@@ -12,7 +12,6 @@
 #include <ros/ros.h>
 #endif
 
-#include "boost/bind.hpp"
 #include <array>
 #include <boost/function.hpp>
 #include <ctime>
@@ -138,13 +137,14 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
 #define LOGGER_ADD_SUBLOGGER_CLASS(_class, _instance)                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    aduulm_logger::g_sublogger_init_callbacks.emplace_back(boost::bind(&_class::_initLogger, boost::ref(_instance)));  \
-    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(boost::bind(                                        \
-        static_cast<void (_class::*)(aduulm_logger::LoggerLevel)>(&_class::_setLogLevel), boost::ref(_instance), _1)); \
+    auto* inst = &_instance;                                                                                           \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back([inst]() { inst->_initLogger(); });                         \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
+        [inst](aduulm_logger::LoggerLevel level) { inst->_setLogLevel(level); });                                      \
     aduulm_logger::g_sublogger_level_change_callbacks_str.emplace_back(                                                \
-        boost::bind(static_cast<void (_class::*)(std::string)>(&_class::_setLogLevel), boost::ref(_instance), _1));    \
+        [inst](std::string level) { inst->_setLogLevel(level); });                                                     \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
-        boost::bind(&_class::_setStreamName, boost::ref(_instance), _1));                                              \
+        [inst](std::string name) { inst->_setStreamName(name); });                                                     \
   } while (0)
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
