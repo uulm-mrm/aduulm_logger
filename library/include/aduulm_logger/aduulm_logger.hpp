@@ -963,15 +963,9 @@ static inline bool initLogger(LoggerLevel log_level, bool is_test = false)
   }
 #endif
 
+  // if env variable is not set, the origin is shown by default.
   std::string show_orig_env = getenv(SHOW_ORIGIN_ENV_VAR_NAME);
-  if (show_orig_env == "1")
-  {
-    g_show_origin = true;
-  }
-  else
-  {
-    g_show_origin = false;
-  }
+  g_show_origin = (show_orig_env != "0");
 
   setLogLevel(log_level);
   LOG_DEB("Logger initialized");

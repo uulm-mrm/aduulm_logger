@@ -65,6 +65,23 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DROS_PACKAGE_NAME="${PROJECT
 
 * In contrast to the mrm logger, a locking function is added to enable multithreaded usage. However this prevents from concurrent logging commands, but not from concurrent std::cout commands.
 
+* Prefixes can be set for logger instances. 
+  A prefix is placed right before the message.
+  It can help to differentiate between different instances of the same type.
+  E.g. when several camera-drivers are launched, each camera can set a different prefix and  logging outputs can easily be assigned to their respective instance.\
+  Using `_setPrefix(std::string)` or `aduulm_logger::setPrefix(std::string)`, a prefix can be defined.
+
+* By default, the logger prints the origin from where the log command was called before the actual message.
+  There are two ways of altering this behavior:
+  * when _initLogger is called, the Environment variable `ADUULM_LOGGER_SHOW_ORIGIN` is evaluated. If it is set to `"0"` the logger will no longer output the respective origin.\
+    E.g. when using ros launch scripts the origin print out can be deactivated with
+    ```xml 
+    <env name="ADUULM_LOGGER_SHOW_ORIGIN" value="0" />
+    ```
+  * the provided `_setShowOrigin(bool)` function can be used to en/disable the origin print out.
+  
+  While the first method sets affects all instances, the second method only alter the behavior of the logger/sublogger instance whose function was called.
+
 ## Internal workings (IMPORTANT, READ THIS BEFORE USAGE!)
 
 In aduulm/source/ros/aduulm_logger!7, major changes to how the logger works were introduced. Before, it had a shared library in which the variables holding the logger level and other stuff were stored. One consequence of this was, that all libraries which were linked into a single executable or library shared the same logger level. Also, in ROS nodelets, all nodelets loaded in one nodelet manager shared the same logger levels. The MR improved this by storing the logger variables once per shared library or executable. This was achieved by setting a visibility attribute on the variables with `__attribute__((visibility("hidden")))`, which does not allow them to be linked outside of the shared library or executable that they are part of. They can be linked outside of static libraries, so one has to be careful when using static libraries, so that the logger variables are not multiply defined.
