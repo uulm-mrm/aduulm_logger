@@ -163,7 +163,7 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
     aduulm_logger::g_sublogger_prefix_change_callbacks.emplace_back(                                                   \
         [inst](std::string name) { inst->_setPrefix(name); });                                                         \
     aduulm_logger::g_sublogger_show_origin_change_callbacks.emplace_back(                                              \
-        [inst](std::string name) { inst->_setShowOrigin(show_origin); });                                              \
+        [inst](bool show_origin) { inst->_setShowOrigin(show_origin); });                                              \
   } while (0)
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
@@ -367,82 +367,112 @@ __inline__ std::thread::id thread_id()
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #ifndef LOG_FATAL
 #define LOG_FATAL(expr)                                                                                                \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                          \
-  else                                                                                                                 \
-    ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
+    else                                                                                                               \
+      ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
+  } while (0)
 #endif
 
 #ifndef LOG_ERR
 #define LOG_ERR(expr)                                                                                                  \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                          \
-  else                                                                                                                 \
-    ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
+    else                                                                                                               \
+      ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
+  } while (0)
 #endif
 
 #ifndef LOG_WARN
 #define LOG_WARN(expr)                                                                                                 \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                           \
-  else                                                                                                                 \
-    ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                         \
+    else                                                                                                               \
+      ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                     \
+  } while (0)
 #endif
 
 #ifndef LOG_INF
 #define LOG_INF(expr)                                                                                                  \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                           \
-  else                                                                                                                 \
-    ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                         \
+    else                                                                                                               \
+      ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                     \
+  } while (0)
 #endif
 
 #ifndef LOG_DEB
 #define LOG_DEB(expr)                                                                                                  \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                          \
-  else                                                                                                                 \
-    ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
+    else                                                                                                               \
+      ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
+  } while (0)
 #endif
 
 #ifndef LOG_FATAL_THROTTLE
 #define LOG_FATAL_THROTTLE(period, expr)                                                                               \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));         \
-  else                                                                                                                 \
-    ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
 #endif
 
 #ifndef LOG_ERR_THROTTLE
 #define LOG_ERR_THROTTLE(period, expr)                                                                                 \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));         \
-  else                                                                                                                 \
-    ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
 #endif
 
 #ifndef LOG_WARN_THROTTLE
 #define LOG_WARN_THROTTLE(period, expr)                                                                                \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));          \
-  else                                                                                                                 \
-    ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
+    else                                                                                                               \
+      ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                    \
+  } while (0)
 #endif
 
 #ifndef LOG_INF_THROTTLE
 #define LOG_INF_THROTTLE(period, expr)                                                                                 \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));          \
-  else                                                                                                                 \
-    ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
+    else                                                                                                               \
+      ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                    \
+  } while (0)
 #endif
 
 #ifndef LOG_DEB_THROTTLE
 #define LOG_DEB_THROTTLE(period, expr)                                                                                 \
-  if (aduulm_logger::g_show_origin)                                                                                    \
-    ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));         \
-  else                                                                                                                 \
-    ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin)                                                                                  \
+      ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
 #endif
 
 #else  // IS_ROS
