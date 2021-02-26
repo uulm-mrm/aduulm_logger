@@ -40,6 +40,8 @@
 #define LOG_GRAY "\033[0;37m"
 #define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
+#define SHOW_ORIGIN_ENV_VAR_NAME "ADUULM_LOGGER_SHOW_ORIGIN"
+
 namespace aduulm_logger
 {
 namespace LoggerLevels
@@ -960,6 +962,16 @@ static inline bool initLogger(LoggerLevel log_level, bool is_test = false)
     ros::Time::init();
   }
 #endif
+
+  std::string show_orig_env = getenv(SHOW_ORIGIN_ENV_VAR_NAME);
+  if (show_orig_env == "1")
+  {
+    g_show_origin = true;
+  }
+  else
+  {
+    g_show_origin = false;
+  }
 
   setLogLevel(log_level);
   LOG_DEB("Logger initialized");
