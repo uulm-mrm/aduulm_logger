@@ -40,6 +40,11 @@
 #define LOG_GRAY "\033[0;37m"
 #define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
+#ifdef NDEBUG
+#define ADUULM_LOGGER_SHORT_CIRCUIT true
+#else
+#define ADUULM_LOGGER_SHORT_CIRCUIT false
+#endif
 #define SHOW_ORIGIN_ENV_VAR_NAME "ADUULM_LOGGER_SHOW_ORIGIN"
 
 namespace aduulm_logger
@@ -369,7 +374,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_FATAL(expr)                                                                                                \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
     else                                                                                                               \
       ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
@@ -380,7 +385,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_ERR(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
     else                                                                                                               \
       ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
@@ -391,7 +396,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_WARN(expr)                                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                         \
     else                                                                                                               \
       ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                     \
@@ -402,7 +407,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                         \
     else                                                                                                               \
       ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                     \
@@ -413,7 +418,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_DEB(expr)                                                                                                  \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
     else                                                                                                               \
       ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
@@ -424,7 +429,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_FATAL_THROTTLE(period, expr)                                                                               \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
     else                                                                                                               \
       ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
@@ -435,7 +440,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_ERR_THROTTLE(period, expr)                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
     else                                                                                                               \
       ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
@@ -446,7 +451,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_WARN_THROTTLE(period, expr)                                                                                \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
     else                                                                                                               \
       ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                    \
@@ -457,7 +462,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_INF_THROTTLE(period, expr)                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
     else                                                                                                               \
       ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                    \
@@ -468,7 +473,7 @@ __inline__ std::thread::id thread_id()
 #define LOG_DEB_THROTTLE(period, expr)                                                                                 \
   do                                                                                                                   \
   {                                                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
     else                                                                                                               \
       ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
@@ -484,7 +489,7 @@ __inline__ std::thread::id thread_id()
     std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                 \
     aduulm_logger::CheckLogCnt();                                                                                      \
     std::stringstream __msg_logger;                                                                                    \
-    if (aduulm_logger::g_show_origin)                                                                                  \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
     {                                                                                                                  \
       __msg_logger << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] "                                \
                    << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                                \
@@ -512,7 +517,7 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      if (aduulm_logger::g_show_origin)                                                                                \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
       {                                                                                                                \
         __msg_logger << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] "                                  \
                      << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
@@ -541,7 +546,7 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      if (aduulm_logger::g_show_origin)                                                                                \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
       {                                                                                                                \
         __msg_logger << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] "                               \
                      << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
@@ -572,7 +577,7 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      if (aduulm_logger::g_show_origin)                                                                                \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
       {                                                                                                                \
         __msg_logger << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] "                                \
                      << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
@@ -603,7 +608,7 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      if (aduulm_logger::g_show_origin)                                                                                \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
       {                                                                                                                \
         __msg_logger << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] "                                 \
                      << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
