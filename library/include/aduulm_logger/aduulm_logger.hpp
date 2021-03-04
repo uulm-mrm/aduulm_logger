@@ -40,6 +40,13 @@
 #define LOG_GRAY "\033[0;37m"
 #define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
+#ifdef NDEBUG
+#define ADUULM_LOGGER_SHORT_CIRCUIT true
+#else
+#define ADUULM_LOGGER_SHORT_CIRCUIT false
+#endif
+#define SHOW_ORIGIN_ENV_VAR_NAME "ADUULM_LOGGER_SHOW_ORIGIN"
+
 namespace aduulm_logger
 {
 namespace LoggerLevels
@@ -59,7 +66,7 @@ static const std::unordered_map<std::string, Level> conv_string_to_level = { { "
                                                                              { "Info", Level::Info },
                                                                              { "Debug", Level::Debug } };
 }  // namespace LoggerLevels
-typedef LoggerLevels::Level LoggerLevel;
+using LoggerLevel = LoggerLevels::Level;
 
 extern std::recursive_mutex g_oLoggerMutex;
 extern std::ofstream g_oFile;
@@ -68,15 +75,21 @@ extern LoggerLevel g_log_level;
 extern bool g_log_to_file;
 extern int g_nLogCount;
 extern int g_nLogNr;
+extern std::string g_prefix;
+extern bool g_show_origin;
 extern std::string g_stream_name;
 using LoggerInitCallback = boost::function<void(void)>;
 using LoggerLevelChangeCallback = boost::function<void(LoggerLevel log_level)>;
 using LoggerLevelChangeCallbackStr = boost::function<void(std::string log_level_string)>;
 using LoggerStreamNameChangeCallback = boost::function<void(std::string stream_name)>;
+using LoggerPrefixChangeCallback = boost::function<void(std::string prefix)>;
+using LoggerShowOriginChangeCallback = boost::function<void(bool show_origin)>;
 extern std::vector<LoggerInitCallback> g_sublogger_init_callbacks;
 extern std::vector<LoggerLevelChangeCallback> g_sublogger_level_change_callbacks;
 extern std::vector<LoggerLevelChangeCallbackStr> g_sublogger_level_change_callbacks_str;
 extern std::vector<LoggerStreamNameChangeCallback> g_sublogger_stream_name_change_callbacks;
+extern std::vector<LoggerPrefixChangeCallback> g_sublogger_prefix_change_callbacks;
+extern std::vector<LoggerShowOriginChangeCallback> g_sublogger_show_origin_change_callbacks;
 
 static inline void CheckLogCnt()
 {
@@ -114,12 +127,17 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
   bool __attribute__((visibility("hidden"))) g_log_to_file = false;                                                    \
   int __attribute__((visibility("hidden"))) g_nLogCount = 0;                                                           \
   int __attribute__((visibility("hidden"))) g_nLogNr = 0;                                                              \
+  std::string __attribute__((visibility("hidden"))) g_prefix;                                                          \
+  bool __attribute__((visibility("hidden"))) g_show_origin = true;                                                     \
   std::vector<LoggerInitCallback> __attribute__((visibility("hidden"))) g_sublogger_init_callbacks;                    \
   std::vector<LoggerLevelChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_level_change_callbacks;     \
   std::vector<LoggerLevelChangeCallbackStr> __attribute__((visibility("hidden")))                                      \
       g_sublogger_level_change_callbacks_str;                                                                          \
   std::vector<LoggerStreamNameChangeCallback> __attribute__((visibility("hidden")))                                    \
       g_sublogger_stream_name_change_callbacks;                                                                        \
+  std::vector<LoggerPrefixChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_prefix_change_callbacks;   \
+  std::vector<LoggerShowOriginChangeCallback> __attribute__((visibility("hidden")))                                    \
+      g_sublogger_show_origin_change_callbacks;                                                                        \
   LOGGER_ROS_EXTRA_DEFINES                                                                                             \
   }
 
@@ -132,6 +150,8 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
     aduulm_logger::g_sublogger_level_change_callbacks_str.emplace_back(                                                \
         static_cast<void (*)(std::string)>(_namespace::_setLogLevel));                                                 \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(_namespace::_setStreamName);                  \
+    aduulm_logger::g_sublogger_prefix_change_callbacks.emplace_back(_namespace::_setPrefix);                           \
+    aduulm_logger::g_sublogger_show_origin_change_callbacks.emplace_back(_namespace::_setShowOrigin);                  \
   } while (0)
 
 #define LOGGER_ADD_SUBLOGGER_CLASS(_class, _instance)                                                                  \
@@ -145,13 +165,19 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
         [inst](std::string level) { inst->_setLogLevel(level); });                                                     \
     aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
         [inst](std::string name) { inst->_setStreamName(name); });                                                     \
+    aduulm_logger::g_sublogger_prefix_change_callbacks.emplace_back(                                                   \
+        [inst](std::string name) { inst->_setPrefix(name); });                                                         \
+    aduulm_logger::g_sublogger_show_origin_change_callbacks.emplace_back(                                              \
+        [inst](bool show_origin) { inst->_setShowOrigin(show_origin); });                                              \
   } while (0)
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
   void _initLogger();                                                                                                  \
   void _setStreamName(std::string stream_name);                                                                        \
   void _setLogLevel(aduulm_logger::LoggerLevel log_level);                                                             \
-  void _setLogLevel(std::string log_level_string);
+  void _setLogLevel(std::string log_level_string);                                                                     \
+  void _setPrefix(std::string prefix);                                                                                 \
+  void _setShowOrigin(bool show_origin);
 
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION                                                                 \
   void _initLogger()                                                                                                   \
@@ -188,13 +214,33 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
     {                                                                                                                  \
       callback(log_level_string);                                                                                      \
     }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setPrefix(std::string prefix)                                                                                  \
+  {                                                                                                                    \
+    aduulm_logger::setPrefix(prefix);                                                                                  \
+    for (auto callback : aduulm_logger::g_sublogger_prefix_change_callbacks)                                           \
+    {                                                                                                                  \
+      callback(prefix);                                                                                                \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _setShowOrigin(bool show_origin)                                                                                \
+  {                                                                                                                    \
+    aduulm_logger::setShowOrigin(show_origin);                                                                         \
+    for (auto callback : aduulm_logger::g_sublogger_show_origin_change_callbacks)                                      \
+    {                                                                                                                  \
+      callback(show_origin);                                                                                           \
+    }                                                                                                                  \
   }
 
 #define DEFINE_LOGGER_CLASS_INTERFACE_HEADER                                                                           \
   void _initLogger();                                                                                                  \
   void _setStreamName(std::string stream_name);                                                                        \
   void _setLogLevel(aduulm_logger::LoggerLevel log_level);                                                             \
-  void _setLogLevel(std::string log_level_string);
+  void _setLogLevel(std::string log_level_string);                                                                     \
+  void _setPrefix(std::string prefix);                                                                                 \
+  void _setShowOrigin(bool show_origin);
 
 #define DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(_class)                                                           \
   void _class ::_initLogger()                                                                                          \
@@ -230,6 +276,24 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
     for (auto callback : aduulm_logger::g_sublogger_level_change_callbacks_str)                                        \
     {                                                                                                                  \
       callback(log_level_string);                                                                                      \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setPrefix(std::string prefix)                                                                         \
+  {                                                                                                                    \
+    aduulm_logger::setPrefix(prefix);                                                                                  \
+    for (auto callback : aduulm_logger::g_sublogger_prefix_change_callbacks)                                           \
+    {                                                                                                                  \
+      callback(prefix);                                                                                                \
+    }                                                                                                                  \
+  }                                                                                                                    \
+                                                                                                                       \
+  void _class ::_setShowOrigin(bool show_origin)                                                                       \
+  {                                                                                                                    \
+    aduulm_logger::setShowOrigin(show_origin);                                                                         \
+    for (auto callback : aduulm_logger::g_sublogger_show_origin_change_callbacks)                                      \
+    {                                                                                                                  \
+      callback(show_origin);                                                                                           \
     }                                                                                                                  \
   }
 
@@ -297,50 +361,123 @@ __inline__ std::thread::id thread_id()
 //
 // Set the default log level
 
+#ifndef _LOG_PREFIX_EXPR
+#define _LOG_PREFIX_EXPR(expr) aduulm_logger::g_prefix << (aduulm_logger::g_prefix.empty() ? "" : ": ") << expr
+#endif
+
+#ifndef _LOG_PREFIX_EXPR_WITH_ORIGIN
+#define _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) _LOG_BASE << ": " << _LOG_PREFIX_EXPR(expr)
+#endif
+
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #ifndef LOG_FATAL
-#define LOG_FATAL(expr) ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#define LOG_FATAL(expr)                                                                                                \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
+    else                                                                                                               \
+      ROS_FATAL_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
+  } while (0)
 #endif
 
 #ifndef LOG_ERR
-#define LOG_ERR(expr) ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#define LOG_ERR(expr)                                                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
+    else                                                                                                               \
+      ROS_ERROR_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
+  } while (0)
 #endif
 
 #ifndef LOG_WARN
-#define LOG_WARN(expr) ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#define LOG_WARN(expr)                                                                                                 \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                         \
+    else                                                                                                               \
+      ROS_WARN_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                     \
+  } while (0)
 #endif
 
 #ifndef LOG_INF
-#define LOG_INF(expr) ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#define LOG_INF(expr)                                                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                         \
+    else                                                                                                               \
+      ROS_INFO_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                     \
+  } while (0)
 #endif
 
 #ifndef LOG_DEB
-#define LOG_DEB(expr) ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+#define LOG_DEB(expr)                                                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                        \
+    else                                                                                                               \
+      ROS_DEBUG_STREAM_NAMED(aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                                    \
+  } while (0)
 #endif
 
 #ifndef LOG_FATAL_THROTTLE
 #define LOG_FATAL_THROTTLE(period, expr)                                                                               \
-  ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      ROS_FATAL_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
 #endif
 
 #ifndef LOG_ERR_THROTTLE
 #define LOG_ERR_THROTTLE(period, expr)                                                                                 \
-  ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      ROS_ERROR_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
 #endif
 
 #ifndef LOG_WARN_THROTTLE
 #define LOG_WARN_THROTTLE(period, expr)                                                                                \
-  ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
+    else                                                                                                               \
+      ROS_WARN_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                    \
+  } while (0)
 #endif
 
 #ifndef LOG_INF_THROTTLE
 #define LOG_INF_THROTTLE(period, expr)                                                                                 \
-  ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
+    else                                                                                                               \
+      ROS_INFO_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                    \
+  } while (0)
 #endif
 
 #ifndef LOG_DEB_THROTTLE
 #define LOG_DEB_THROTTLE(period, expr)                                                                                 \
-  ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_BASE << ": " << expr)
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      ROS_DEBUG_STREAM_THROTTLE_NAMED(period, aduulm_logger::g_stream_name, _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
 #endif
 
 #else  // IS_ROS
@@ -352,8 +489,16 @@ __inline__ std::thread::id thread_id()
     std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                                 \
     aduulm_logger::CheckLogCnt();                                                                                      \
     std::stringstream __msg_logger;                                                                                    \
-    __msg_logger << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr     \
-                 << LOG_NORMAL;                                                                                        \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+    {                                                                                                                  \
+      __msg_logger << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] "                                \
+                   << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                                \
+    }                                                                                                                  \
+    else                                                                                                               \
+    {                                                                                                                  \
+      __msg_logger << LOG_MAGENTA << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_PREFIX_EXPR(expr)      \
+                   << LOG_NORMAL;                                                                                      \
+    }                                                                                                                  \
     if (aduulm_logger::g_log_to_file)                                                                                  \
     {                                                                                                                  \
       aduulm_logger::g_oFile << "[FATAL] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr        \
@@ -372,8 +517,16 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      __msg_logger << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr       \
-                   << LOG_NORMAL;                                                                                      \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
+      {                                                                                                                \
+        __msg_logger << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] "                                  \
+                     << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
+      }                                                                                                                \
+      else                                                                                                             \
+      {                                                                                                                \
+        __msg_logger << LOG_RED << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_PREFIX_EXPR(expr)        \
+                     << LOG_NORMAL;                                                                                    \
+      }                                                                                                                \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[ERROR] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
@@ -393,8 +546,16 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      __msg_logger << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr    \
-                   << LOG_NORMAL;                                                                                      \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
+      {                                                                                                                \
+        __msg_logger << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] "                               \
+                     << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
+      }                                                                                                                \
+      else                                                                                                             \
+      {                                                                                                                \
+        __msg_logger << LOG_YELLOW << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_PREFIX_EXPR(expr)     \
+                     << LOG_NORMAL;                                                                                    \
+      }                                                                                                                \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[WARN ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
@@ -416,8 +577,16 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      __msg_logger << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr     \
-                   << LOG_NORMAL;                                                                                      \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
+      {                                                                                                                \
+        __msg_logger << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] "                                \
+                     << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
+      }                                                                                                                \
+      else                                                                                                             \
+      {                                                                                                                \
+        __msg_logger << LOG_GREEN << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_PREFIX_EXPR(expr)      \
+                     << LOG_NORMAL;                                                                                    \
+      }                                                                                                                \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[INFO ] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
@@ -439,8 +608,16 @@ __inline__ std::thread::id thread_id()
       std::lock_guard<std::recursive_mutex> _oLockLogger(aduulm_logger::g_oLoggerMutex);                               \
       aduulm_logger::CheckLogCnt();                                                                                    \
       std::stringstream __msg_logger;                                                                                  \
-      __msg_logger << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
-                   << LOG_NORMAL;                                                                                      \
+      if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                 \
+      {                                                                                                                \
+        __msg_logger << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] "                                 \
+                     << _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) << LOG_NORMAL;                                              \
+      }                                                                                                                \
+      else                                                                                                             \
+      {                                                                                                                \
+        __msg_logger << LOG_BLUE << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_PREFIX_EXPR(expr)       \
+                     << LOG_NORMAL;                                                                                    \
+      }                                                                                                                \
       if (aduulm_logger::g_log_to_file)                                                                                \
       {                                                                                                                \
         aduulm_logger::g_oFile << "[DEBUG] [" << DataTypesLogger::longTime() << "] " << _LOG_BASE << ": " << expr      \
@@ -821,6 +998,13 @@ static inline bool initLogger(LoggerLevel log_level, bool is_test = false)
   }
 #endif
 
+  // if env variable is not set, the origin is shown by default.
+  if (const char* const env_val = getenv(SHOW_ORIGIN_ENV_VAR_NAME))
+  {
+    std::string show_orig_env{ env_val };
+    g_show_origin = (show_orig_env != "0");
+  }
+
   setLogLevel(log_level);
   LOG_DEB("Logger initialized");
 
@@ -835,6 +1019,16 @@ static inline bool initLogger(bool is_test = false)
 static inline void setStreamName(std::string name)
 {
   g_stream_name = name;
+}
+
+static inline void setPrefix(std::string prefix)
+{
+  g_prefix = prefix;
+}
+
+static inline void setShowOrigin(bool show_origin)
+{
+  g_show_origin = show_origin;
 }
 
 static inline bool initLogger(std::string file_name, LoggerLevel log_level, bool is_test = false)
