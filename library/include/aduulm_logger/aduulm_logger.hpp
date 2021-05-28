@@ -1,12 +1,11 @@
-/**
- * \file aduulmlogger.h
- *
- * @brief Remaps ADTF log commands to std::cout (as before) or ROS.
- * Remapping to ROS if built with -DHAVE_LOG
- */
-#if !defined(_ADUULM_LOGGER_H_) and !defined(_LOGGER_H_)  // Guard aduulm_logger from being included if Defines/Logger
-                                                          // is already included in project and vice a versa
+// Guard aduulm_logger from being included if Defines/Logger is already included in project and vice versa
+#if !defined(_ADUULM_LOGGER_H_) and !defined(_LOGGER_H_)
 #define _ADUULM_LOGGER_H_
+
+// Check if there are conflicting definitions of our macros
+#if defined(LOG_DEB) || defined(LOG_INF) || defined(LOG_WARN) || defined(LOG_ERR) || defined(LOG_FATAL)
+#warning "One or more of the logging macros were already defined! This should not happen!"
+#endif
 
 #if defined(IS_ROS) || defined(USE_ROS_LOG)
 #include <ros/ros.h>
@@ -33,12 +32,12 @@
 #define LOG_GREEN "\033[1m\033[32m"
 #define LOG_YELLOW "\033[1m\033[33m"
 //#define LOG_WHITE "\033[1m"
-#define LOG_WHITE "\033[37m"   /* White */
-#define LOG_BLUE "\033[34m"    /* Blue */
-#define LOG_MAGENTA "\033[35m" /* Magenta */
-#define LOG_CYAN "\033[36m"    /* Cyan */
+#define LOG_WHITE "\033[37m"
+#define LOG_BLUE "\033[34m"
+#define LOG_MAGENTA "\033[35m"
+#define LOG_CYAN "\033[36m"
 #define LOG_GRAY "\033[0;37m"
-#define LOG_BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
+#define LOG_BOLDBLUE "\033[1m\033[34m"
 
 #ifdef NDEBUG
 #define ADUULM_LOGGER_SHORT_CIRCUIT true
@@ -132,12 +131,12 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
   std::vector<LoggerInitCallback> __attribute__((visibility("hidden"))) g_sublogger_init_callbacks;                    \
   std::vector<LoggerLevelChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_level_change_callbacks;     \
   std::vector<LoggerLevelChangeCallbackStr> __attribute__((visibility("hidden")))                                      \
-      g_sublogger_level_change_callbacks_str;                                                                          \
+  g_sublogger_level_change_callbacks_str;                                                                              \
   std::vector<LoggerStreamNameChangeCallback> __attribute__((visibility("hidden")))                                    \
-      g_sublogger_stream_name_change_callbacks;                                                                        \
+  g_sublogger_stream_name_change_callbacks;                                                                            \
   std::vector<LoggerPrefixChangeCallback> __attribute__((visibility("hidden"))) g_sublogger_prefix_change_callbacks;   \
   std::vector<LoggerShowOriginChangeCallback> __attribute__((visibility("hidden")))                                    \
-      g_sublogger_show_origin_change_callbacks;                                                                        \
+  g_sublogger_show_origin_change_callbacks;                                                                            \
   LOGGER_ROS_EXTRA_DEFINES                                                                                             \
   }
 
