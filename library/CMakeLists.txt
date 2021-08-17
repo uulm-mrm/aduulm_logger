@@ -39,12 +39,27 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 
 target_link_libraries(${PROJECT_NAME} INTERFACE ${Boost_LIBRARIES})
 
+set(EXTRA_PACKAGES_USED FALSE)
+set(EXTRA_PACKAGES "")
 if(IS_ROS)
-  find_package(catkin REQUIRED COMPONENTS roscpp)
-  target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} INTERFACE ${catkin_LIBRARIES})
-  set(EXTRA_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
-  set(EXTRA_LIBRARIES ${catkin_LIBRARIES})
+  find_package(rclcpp QUIET)
+  if(rclcpp_FOUND)
+    # ROS2
+    target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE ${rclcpp_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} INTERFACE ${rclcpp_LIBRARIES})
+    target_compile_definitions(${PROJECT_NAME} INTERFACE -DIS_ROS2=1)
+    set(EXTRA_INCLUDE_DIRS ${rclcpp_INCLUDE_DIRS})
+    set(EXTRA_LIBRARIES ${rclcpp_LIBRARIES})
+    set(EXTRA_PACKAGES_USED TRUE)
+    set(EXTRA_PACKAGES rclcpp)
+  else()
+    # ROS1
+    find_package(catkin REQUIRED COMPONENTS roscpp)
+    target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE ${catkin_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} INTERFACE ${catkin_LIBRARIES})
+    set(EXTRA_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
+    set(EXTRA_LIBRARIES ${catkin_LIBRARIES})
+  endif()
 else()
   set(EXTRA_INCLUDE_DIRS "")
   set(EXTRA_LIBRARIES "")
@@ -76,7 +91,7 @@ configure_package_config_file(
   "${PROJECT_SOURCE_DIR}/config.cmake.in"
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
   INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME}
-  PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR BIN_INSTALL_DIR EXTRA_INCLUDE_DIRS EXTRA_LIBRARIES
+  PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR BIN_INSTALL_DIR EXTRA_INCLUDE_DIRS EXTRA_LIBRARIES EXTRA_PACKAGES_USED EXTRA_PACKAGES
 )
 
 install(EXPORT ${PROJECT_NAME}Targets
