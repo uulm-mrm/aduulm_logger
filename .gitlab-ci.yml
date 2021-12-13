@@ -22,9 +22,3 @@ rolling-colcon_build-install:
   script:
     - build_repo_with_dependencies_ros2.sh rolling
 
-# Tests for Unicar Melodic with Install
-unicar-melodic-catkin_build-install:
-  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/unicar-ros-melodic-ci:latest
-  stage: build
-  script:
-    - build_repo_with_dependencies.sh gitlab_install
