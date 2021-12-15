@@ -6,13 +6,17 @@ list(APPEND @PROJECT_NAME@_INCLUDE_DIRS @PACKAGE_EXTRA_INCLUDE_DIRS@)
 #set_and_check(@PROJECT_NAME@_LIB_DIR "@PACKAGE_LIB_INSTALL_DIR@")
 #Uncomment the following line if your library installs binaries
 #set_and_check(@PROJECT_NAME@_BIN_DIR "@PACKAGE_BIN_INSTALL_DIR@")
-#set(@PROJECT_NAME@_LIBRARIES -L@PACKAGE_LIB_INSTALL_DIR@ -l@PROJECT_NAME@)
+
+set(@PROJECT_NAME@_LIBRARIES @PROJECT_NAME@::@PROJECT_NAME@)
+
 # list(APPEND @PROJECT_NAME@_LIBRARIES @PACKAGE_EXTRA_LIBRARIES@)
 set(@PROJECT_NAME@_LIBRARIES @PACKAGE_EXTRA_LIBRARIES@)
 check_required_components(@PROJECT_NAME@)
 
 if(@EXTRA_PACKAGES_USED@)
-find_package(@EXTRA_PACKAGES@ REQUIRED)
+foreach(target @EXTRA_PACKAGES@)
+  find_package(${target} REQUIRED)
+endforeach()
 endif()
 
 #Include exported targets
