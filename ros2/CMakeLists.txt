@@ -6,7 +6,5 @@ find_package(aduulm_cmake_tools REQUIRED)
 
 aduulm_init_ros2_package()
 
-add_library(aduulm_logger INTERFACE)
-
 aduulm_create_ros2_package()
 setup_git_hooks()
