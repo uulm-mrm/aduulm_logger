@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aduulm_logger</name>
+  <version>0.3.0</version>
+  <description>The aduulm_logger package enables the use of ADTF_Logger commands in ROS2. It can map from ADTF commands to cout or ROS2 logger.</description>
+
+  <maintainer email="martin.herrmann@uni-ulm.de">herrmann</maintainer>
+
+  <license>Proprietary, (c) 2018 Ulm University, Institute of Measurement, Control and Microtechnology</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>aduulm_cmake_tools</build_depend>
+
+  <depend>aduulm_logger_lib</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

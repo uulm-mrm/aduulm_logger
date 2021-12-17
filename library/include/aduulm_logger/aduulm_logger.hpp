@@ -7,7 +7,9 @@
 #warning "One or more of the logging macros were already defined! This should not happen!"
 #endif
 
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#if defined(IS_ROS2)
+#include <rclcpp/rclcpp.hpp>
+#elif defined(IS_ROS)
 #include <ros/ros.h>
 #endif
 
@@ -77,6 +79,9 @@ extern int g_nLogNr;
 extern std::string g_prefix;
 extern bool g_show_origin;
 extern std::string g_stream_name;
+#if defined(IS_ROS2)
+extern std::shared_ptr<rclcpp::Clock> g_rclcpp_clock;
+#endif
 using LoggerInitCallback = boost::function<void(void)>;
 using LoggerLevelChangeCallback = boost::function<void(LoggerLevel log_level)>;
 using LoggerLevelChangeCallbackStr = boost::function<void(std::string log_level_string)>;
@@ -104,7 +109,17 @@ static inline void CheckLogCnt()
 }
 }  // namespace aduulm_logger
 
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#if defined(IS_ROS2)
+static const std::array<rclcpp::Logger::Level, 5> level_mapping = { rclcpp::Logger::Level::Fatal,
+                                                                    rclcpp::Logger::Level::Error,
+                                                                    rclcpp::Logger::Level::Warn,
+                                                                    rclcpp::Logger::Level::Info,
+                                                                    rclcpp::Logger::Level::Debug };
+#define LOGGER_ROS_EXTRA_DEFINES                                                                                       \
+  std::string __attribute__((visibility("hidden"))) g_stream_name = "ROS2_Default_logger_name";                        \
+  std::shared_ptr<rclcpp::Clock> __attribute__((visibility("hidden"))) g_rclcpp_clock =                                \
+      std::make_shared<rclcpp::Clock>();
+#elif defined(IS_ROS)
 static const std::array<ros::console::Level, 5> level_mapping = { ros::console::levels::Fatal,
                                                                   ros::console::levels::Error,
                                                                   ros::console::levels::Warn,
@@ -112,7 +127,7 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
                                                                   ros::console::levels::Debug };
 #define LOGGER_ROS_EXTRA_DEFINES                                                                                       \
   std::string __attribute__((visibility("hidden"))) g_stream_name = ROSCONSOLE_DEFAULT_NAME;
-#else
+#else  // no IS_ROS or IS_ROS2
 #define LOGGER_ROS_EXTRA_DEFINES std::string __attribute__((visibility("hidden"))) g_stream_name = "default";
 #endif
 
@@ -368,7 +383,148 @@ __inline__ std::thread::id thread_id()
 #define _LOG_PREFIX_EXPR_WITH_ORIGIN(expr) _LOG_BASE << ": " << _LOG_PREFIX_EXPR(expr)
 #endif
 
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#if defined(IS_ROS2)
+#ifndef LOG_FATAL
+#define LOG_FATAL(expr)                                                                                                \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_FATAL_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      RCLCPP_FATAL_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
+#endif
+
+#ifndef LOG_ERR
+#define LOG_ERR(expr)                                                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
+#endif
+
+#ifndef LOG_WARN
+#define LOG_WARN(expr)                                                                                                 \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
+    else                                                                                                               \
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR(expr));                    \
+  } while (0)
+#endif
+
+#ifndef LOG_INF
+#define LOG_INF(expr)                                                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));        \
+    else                                                                                                               \
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR(expr));                    \
+  } while (0)
+#endif
+
+#ifndef LOG_DEB
+#define LOG_DEB(expr)                                                                                                  \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));       \
+    else                                                                                                               \
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(aduulm_logger::g_stream_name), _LOG_PREFIX_EXPR(expr));                   \
+  } while (0)
+#endif
+
+#ifndef LOG_FATAL_THROTTLE
+#define LOG_FATAL_THROTTLE(period, expr)                                                                               \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_FATAL_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
+                                   *aduulm_logger::g_rclcpp_clock,                                                     \
+                                   period,                                                                             \
+                                   _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                \
+    else                                                                                                               \
+      RCLCPP_FATAL_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
+                                   *aduulm_logger::g_rclcpp_clock,                                                     \
+                                   period,                                                                             \
+                                   _LOG_PREFIX_EXPR(expr));                                                            \
+  } while (0)
+#endif
+
+#ifndef LOG_ERR_THROTTLE
+#define LOG_ERR_THROTTLE(period, expr)                                                                                 \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_ERROR_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
+                                   *aduulm_logger::g_rclcpp_clock,                                                     \
+                                   period,                                                                             \
+                                   _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                \
+    else                                                                                                               \
+      RCLCPP_ERROR_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
+                                   *aduulm_logger::g_rclcpp_clock,                                                     \
+                                   period,                                                                             \
+                                   _LOG_PREFIX_EXPR(expr));                                                            \
+  } while (0)
+#endif
+
+#ifndef LOG_WARN_THROTTLE
+#define LOG_WARN_THROTTLE(period, expr)                                                                                \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
+                                  *aduulm_logger::g_rclcpp_clock,                                                      \
+                                  period,                                                                              \
+                                  _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                 \
+    else                                                                                                               \
+      RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
+                                  *aduulm_logger::g_rclcpp_clock,                                                      \
+                                  period,                                                                              \
+                                  _LOG_PREFIX_EXPR(expr));                                                             \
+  } while (0)
+#endif
+
+#ifndef LOG_INF_THROTTLE
+#define LOG_INF_THROTTLE(period, expr)                                                                                 \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_INFO_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
+                                  *aduulm_logger::g_rclcpp_clock,                                                      \
+                                  period,                                                                              \
+                                  _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                 \
+    else                                                                                                               \
+      RCLCPP_INFO_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
+                                  *aduulm_logger::g_rclcpp_clock,                                                      \
+                                  period,                                                                              \
+                                  _LOG_PREFIX_EXPR(expr));                                                             \
+  } while (0)
+#endif
+
+#ifndef LOG_DEB_THROTTLE
+#define LOG_DEB_THROTTLE(period, expr)                                                                                 \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
+      RCLCPP_DEBUG_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
+                                   *aduulm_logger::g_rclcpp_clock,                                                     \
+                                   period,                                                                             \
+                                   _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                \
+    else                                                                                                               \
+      RCLCPP_DEBUG_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
+                                   *aduulm_logger::g_rclcpp_clock,                                                     \
+                                   period,                                                                             \
+                                   _LOG_PREFIX_EXPR(expr));                                                            \
+  } while (0)
+#endif
+
+#elif defined(IS_ROS)
 #ifndef LOG_FATAL
 #define LOG_FATAL(expr)                                                                                                \
   do                                                                                                                   \
@@ -479,7 +635,7 @@ __inline__ std::thread::id thread_id()
   } while (0)
 #endif
 
-#else  // IS_ROS
+#else  // no IS_ROS or IS_ROS2
 
 #ifndef LOG_FATAL
 #define LOG_FATAL(expr)                                                                                                \
@@ -953,7 +1109,17 @@ namespace aduulm_logger
 {
 static inline void setLogLevel(LoggerLevel log_level)
 {
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#if defined(IS_ROS2)
+  if (log_level >= LoggerLevels::None)  // should always be true, but just in case
+  {
+    if (log_level > LoggerLevels::Debug)  // should also not happen, just in case
+    {
+      log_level = LoggerLevels::Debug;
+    }
+    auto lvl = level_mapping[log_level];
+    rclcpp::get_logger(aduulm_logger::g_stream_name).set_level(lvl);
+  }
+#elif defined(IS_ROS)
   if (log_level >= LoggerLevels::None)  // should always be true, but just in case
   {
     if (log_level > LoggerLevels::Debug)  // should also not happen, just in case
@@ -981,7 +1147,9 @@ static inline LoggerLevel getLogLevel()
   return g_log_level;
 }
 
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#if defined(IS_ROS2)
+#define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
+#elif defined(IS_ROS)
 #define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
 #else
 #define DEFAULT_LOG_LEVEL aduulm_logger::LoggerLevel::Warn
@@ -989,7 +1157,7 @@ static inline LoggerLevel getLogLevel()
 
 static inline bool initLogger(LoggerLevel log_level, bool is_test = false)
 {
-#if defined(IS_ROS) || defined(USE_ROS_LOG)
+#if defined(IS_ROS)
   if (is_test)
   {
     // This is required in unit tests that do not use ROS to be able to use throttled logging.
