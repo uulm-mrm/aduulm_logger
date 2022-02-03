@@ -167,7 +167,9 @@ This should be everything that is required for a library. LIBRARY_NAME::_initLog
  }  // namespace PACKAGE_NAME
 ```
 
-4. `LOGGER_ADD_SUBLOGGER_LIBRARY` and `LOGGER_ADD_SUBLOGGER_CLASS`: These two macros can be used to control the logger levels of dependent libraries automatically, e.g. if the logger level of one library/executable is changed, the logger levels of other linked shared libraries can be adjusted automatically to the same level. Example usage, extracted from the ros_package_creation script:
+4. `LOGGER_ADD_SUBLOGGER_LIBRARY`, `LOGGER_ADD_SUBLOGGER_CLASS`, and `LOGGER_ADD_SUBLOGGER_PARENT_CLASS`: These three macros can be used to control the logger levels of dependent libraries/classes automatically, e.g. if the logger level of one library/executable is changed, the logger levels of other linked shared libraries can be adjusted automatically to the same level.
+`LOGGER_ADD_SUBLOGGER_PARENT_CLASS` may only be used if one's parent class defines its own logger namespace/variables, i.e. class variables are declared/defined with `DEFINE_LOGGER_CLASS_INTERFACE_HEADER` and `DEFINE_LOGGER_ClASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)`, respectively. \
+Example usage, extracted from the ros_package_creation script:
 
 ```diff
  // MY_NODE.cpp

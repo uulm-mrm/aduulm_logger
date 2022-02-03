@@ -185,6 +185,23 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
         [inst](bool show_origin) { inst->_setShowOrigin(show_origin); });                                              \
   } while (0)
 
+#define LOGGER_ADD_SUBLOGGER_PARENT_CLASS(_class, _this)                                                               \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    auto* inst = static_cast<_class*>(_this);                                                                          \
+    aduulm_logger::g_sublogger_init_callbacks.emplace_back([inst]() { inst->_initLogger(); });                         \
+    aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
+        [inst](aduulm_logger::LoggerLevel level) { inst->_setLogLevel(level); });                                      \
+    aduulm_logger::g_sublogger_level_change_callbacks_str.emplace_back(                                                \
+        [inst](std::string level) { inst->_setLogLevel(level); });                                                     \
+    aduulm_logger::g_sublogger_stream_name_change_callbacks.emplace_back(                                              \
+        [inst](std::string name) { inst->_setStreamName(name); });                                                     \
+    aduulm_logger::g_sublogger_prefix_change_callbacks.emplace_back(                                                   \
+        [inst](std::string name) { inst->_setPrefix(name); });                                                         \
+    aduulm_logger::g_sublogger_show_origin_change_callbacks.emplace_back(                                              \
+        [inst](bool show_origin) { inst->_setShowOrigin(show_origin); });                                              \
+  } while (0)
+
 #define DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER                                                                         \
   void _initLogger();                                                                                                  \
   void _setStreamName(std::string stream_name);                                                                        \
