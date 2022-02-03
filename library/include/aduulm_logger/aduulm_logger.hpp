@@ -188,7 +188,7 @@ static const std::array<ros::console::Level, 5> level_mapping = { ros::console::
 #define LOGGER_ADD_SUBLOGGER_PARENT_CLASS(_class, _this)                                                               \
   do                                                                                                                   \
   {                                                                                                                    \
-    _class* inst = static_cast<_class*>(_this);                                                                        \
+    auto* inst = static_cast<_class*>(_this);                                                                          \
     aduulm_logger::g_sublogger_init_callbacks.emplace_back([inst]() { inst->_initLogger(); });                         \
     aduulm_logger::g_sublogger_level_change_callbacks.emplace_back(                                                    \
         [inst](aduulm_logger::LoggerLevel level) { inst->_setLogLevel(level); });                                      \
