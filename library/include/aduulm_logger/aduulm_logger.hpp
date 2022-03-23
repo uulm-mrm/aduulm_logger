@@ -463,12 +463,12 @@ __inline__ std::thread::id thread_id()
     if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       RCLCPP_FATAL_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
                                    *aduulm_logger::g_rclcpp_clock,                                                     \
-                                   period,                                                                             \
+                                   period * 1000,                                                                      \
                                    _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                \
     else                                                                                                               \
       RCLCPP_FATAL_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
                                    *aduulm_logger::g_rclcpp_clock,                                                     \
-                                   period,                                                                             \
+                                   period * 1000,                                                                      \
                                    _LOG_PREFIX_EXPR(expr));                                                            \
   } while (0)
 #endif
@@ -480,12 +480,12 @@ __inline__ std::thread::id thread_id()
     if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       RCLCPP_ERROR_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
                                    *aduulm_logger::g_rclcpp_clock,                                                     \
-                                   period,                                                                             \
+                                   period * 1000,                                                                      \
                                    _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                \
     else                                                                                                               \
       RCLCPP_ERROR_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
                                    *aduulm_logger::g_rclcpp_clock,                                                     \
-                                   period,                                                                             \
+                                   period * 1000,                                                                      \
                                    _LOG_PREFIX_EXPR(expr));                                                            \
   } while (0)
 #endif
@@ -497,12 +497,12 @@ __inline__ std::thread::id thread_id()
     if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
                                   *aduulm_logger::g_rclcpp_clock,                                                      \
-                                  period,                                                                              \
+                                  period * 1000,                                                                       \
                                   _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                 \
     else                                                                                                               \
       RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
                                   *aduulm_logger::g_rclcpp_clock,                                                      \
-                                  period,                                                                              \
+                                  period * 1000,                                                                       \
                                   _LOG_PREFIX_EXPR(expr));                                                             \
   } while (0)
 #endif
@@ -514,12 +514,12 @@ __inline__ std::thread::id thread_id()
     if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       RCLCPP_INFO_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
                                   *aduulm_logger::g_rclcpp_clock,                                                      \
-                                  period,                                                                              \
+                                  period * 1000,                                                                       \
                                   _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                 \
     else                                                                                                               \
       RCLCPP_INFO_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                    \
                                   *aduulm_logger::g_rclcpp_clock,                                                      \
-                                  period,                                                                              \
+                                  period * 1000,                                                                       \
                                   _LOG_PREFIX_EXPR(expr));                                                             \
   } while (0)
 #endif
@@ -531,12 +531,12 @@ __inline__ std::thread::id thread_id()
     if (aduulm_logger::g_show_origin or ADUULM_LOGGER_SHORT_CIRCUIT)                                                   \
       RCLCPP_DEBUG_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
                                    *aduulm_logger::g_rclcpp_clock,                                                     \
-                                   period,                                                                             \
+                                   period * 1000,                                                                      \
                                    _LOG_PREFIX_EXPR_WITH_ORIGIN(expr));                                                \
     else                                                                                                               \
       RCLCPP_DEBUG_STREAM_THROTTLE(rclcpp::get_logger(aduulm_logger::g_stream_name),                                   \
                                    *aduulm_logger::g_rclcpp_clock,                                                     \
-                                   period,                                                                             \
+                                   period * 1000,                                                                      \
                                    _LOG_PREFIX_EXPR(expr));                                                            \
   } while (0)
 #endif
