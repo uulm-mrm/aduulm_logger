@@ -7,12 +7,12 @@ get_version_string_from_package_xml(.)
 show_build_info("library")
 setup_git_hooks()
 
-# we default to Release build type
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-
 find_package(Boost REQUIRED)
+
+# install python code
+# PYTHON_INSTALL_DIR is defined by aduulm_cmake_tools
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/python/aduulm_logger_python/
+        DESTINATION ${PYTHON_INSTALL_DIR}/aduulm_logger_python)
 
 set(INCLUDE_INSTALL_DIR include/ CACHE STRING "Path to installed include directory")
 set(LIB_INSTALL_DIR lib/ CACHE STRING "Path to installed lib directory")
