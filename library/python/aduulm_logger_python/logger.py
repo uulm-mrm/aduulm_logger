@@ -51,11 +51,22 @@ class Logger:
                 "Error": LoggingSeverity.ERROR,
                 "None": LoggingSeverity.FATAL,
             }
+            import rclpy.utilities
+            def logger_wrapper(logger, level):
+                def log(*args, **kwargs):
+                    if rclpy.utilities.ok():
+                        logger(*args, **kwargs)
+                    else:
+                        # Switch to print logger when ROS deactivates, so that no logs get lost
+                        use_print_logger()
+                        self._do_print(level, *args, **kwargs)
+                return log
+
             self.functions = {
-                "Debug": node.get_logger().debug,
-                "Info": node.get_logger().info,
-                "Warn": node.get_logger().warning,
-                "Error": node.get_logger().error,
+                "Debug": logger_wrapper(node.get_logger().debug, "Debug"),
+                "Info": logger_wrapper(node.get_logger().info, "Info"),
+                "Warn": logger_wrapper(node.get_logger().warning, "Warn"),
+                "Error": logger_wrapper(node.get_logger().error, "Error"),
                 "SET_LEVEL": lambda level: rclpy.logging.set_logger_level(node.get_logger().name, logger_levels_to_severity[level]),
             }
         except IndexError:
@@ -70,6 +81,9 @@ class Logger:
     def set_level(self, level):
         is_int = isinstance(level, int)
         is_str = isinstance(level, str)
+        if is_str:
+            # Convert other case variants to the allowed format
+            level = level[0].upper() + level[1:].lower()
         if is_int:
             try:
                 level = self._levels[level]
