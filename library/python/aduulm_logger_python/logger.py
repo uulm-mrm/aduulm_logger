@@ -81,6 +81,9 @@ class Logger:
     def set_level(self, level):
         is_int = isinstance(level, int)
         is_str = isinstance(level, str)
+        if is_str:
+            # Convert other case variants to the allowed format
+            level = level[0].upper() + level[1:].lower()
         if is_int:
             try:
                 level = self._levels[level]
