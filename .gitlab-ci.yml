@@ -1,24 +1,16 @@
 variables:
   GIT_STRATEGY: none
+  image_aduulm_rolling: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros2-rolling:latest
+  image_aduulm_iron: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros2-iron:latest
 
-# Tests for Noetic with Install
-noetic-catkin_build-install:
-  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros-noetic:latest
-  stage: build
+.common:
   script:
-    - build_repo_with_dependencies.sh gitlab_install
-    
-# Tests for Noetic without install
-noetic-catkin_build-no_install:
-  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros-noetic:latest
-  stage: build
-  script:
-    - build_repo_with_dependencies.sh gitlab_no_install
+    - build_repo_with_dependencies_ros2.sh
 
-# Tests for Noetic without install
-rolling-colcon_build-install:
-  image: mrm-git.e-technik.uni-ulm.de:4567/aduulm/docker_images/aduulm-ros2-rolling:latest
-  stage: build
-  script:
-    - build_repo_with_dependencies_ros2.sh rolling
+ros2_rolling_build:
+  extends: .common
+  image: $image_aduulm_rolling
 
+ros2_iron_build:
+  extends: .common
+  image: $image_aduulm_iron
