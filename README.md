@@ -13,12 +13,13 @@ The aduulm logger package is thought to be used in projects with libraries for R
 
 The source code is not official released and is only for internal use.
 
-**Author(s): Martin Herrmann   
-Maintainer 1:  Martin Herrmann,  Martin.Herrmann@uni-ulm.de  
-Maintainer 2:  Jan Strohbeck, Jan.Strohbeck@uni-ulm.de  
+**Author(s): Martin Herrmann, Jan Strohbeck, Thomas Wodtko   
+* Thomas Wodtko,  thomas.wodtko@uni-ulm.de 
+* Jona Ruof, jona.ruof@uni-ulm.de  
+
 Affiliation: Institute of Measurements, Control and Microtechnology, Ulm University**
 
-The aduulm_logger package has been tested under [ROS] Kinetic and Ubuntu 16.04. 
+The aduulm_logger package has been tested under [ROS2] Iron and Ubuntu 22.04. 
 This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 
