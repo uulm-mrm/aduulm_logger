@@ -1,44 +1,40 @@
-# aduulm_logger
+aduulm_logger
+=============
 
-# PLEASE MAKE SURE YOU READ THIS WHOLE README BEFORE USAGE OF THE LOGGER!
+This package provides logging macros for C/C++ projects. It also provides a Python library for logging in Python.
 
-## Overview
+It is intended to be useful primarily for code which can also run in ROS environments. In such environments, this library redirects log messages to ROS/ROS2 logging commands. Outside of ROS, stdout is used.
 
-The aduulm logger package is thought to be used in projects with libraries for ROS and ADTF. It redirects logging messages either to a cout or ROS_LOG command and therefore simplifies the portation of packages from ADTF to ROS which use the ADTF logging commands. It also contains a node for simple log message printing from command line or launch file.
+License
+=======
 
-**Keywords:** mrm, logger, ros, aduulm, ADTF, ROS, logging
+License: Apache 2.0
 
+Authors: Martin Herrmann, Jan Strohbeck, Thomas Wodtko (MRM)
 
-### License
+Maintainers: Thomas Wodtko, Jona Ruof (MRM)
 
-The source code is not official released and is only for internal use.
+Affiliation: Institute of Measurement, Control and Microtechnology (MRM), Ulm University
 
-**Author(s): Martin Herrmann, Jan Strohbeck, Thomas Wodtko   
-* Thomas Wodtko,  thomas.wodtko@uni-ulm.de 
-* Jona Ruof, jona.ruof@uni-ulm.de  
+Dependencies
+============
 
-Affiliation: Institute of Measurements, Control and Microtechnology, Ulm University**
+ - [CMake](https://cmake.org/)
+ - [aduulm_cmake_tools](https://github.com/uulm-mrm/aduulm_cmake_tools)
+ - ROS/ROS2 (optional, for using the ROS2-specific macros)
 
-The aduulm_logger package has been tested under [ROS2] Iron and Ubuntu 22.04. 
-This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
-
-
-## Dependencies
-
-* [Robot Operating System (ROS)](http://wiki.ros.org) (optional)
-* Boost
-
-## Usage
+Usage
+=====
 
 ### Logger
-* The aduulm_logger uses the same logging commands as the mrm ADTF logger (LOG_ERR, LOG_WARN, LOG_INF, ...) and has two modes. It can print the messages like the mrm ADTF logger via std::cout or redirect the messages to the ROS logger (ROS_ERROR, ROS_WARN, ROS_INFO, ...). This should be set by global defines, e.g. in the catkin profile:
-```yaml
-cmake_args:
-- -DCMAKE_CXX_COMPILER_ARG1=-DIS_ROS
+* The aduulm_logger uses the logging commands `LOG_ERR, LOG_WARN, LOG_INF, LOG_DEB` and has two modes. It can print the messages via std::cout or redirect the messages to the ROS logger. This should be set by global CMake defines, e.g.:
+```
+-DCMAKE_CXX_COMPILER_ARG1=-DIS_ROS2 # for ROS2
+-DCMAKE_CXX_COMPILER_ARG1=-DIS_ROS # for ROS1
 ```
 or
 ```cmake
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DUSE_ROS_LOG)
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DIS_ROS2)
 ```
 
 * Add the package to your project (you should already have included the aduulm_cmake_tools):
@@ -62,11 +58,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DROS_PACKAGE_NAME="${PROJECT
 
 * To be able to use the logger, it needs to be initialized before the first usage: If you used the library/class setup macros, you can can call `_initLogger();`. Otherwise, you can call `aduulm_logger::initLogger()`. If the logger is used in non ROS mode (no flag set), it can be initialized with the optional parameters file_name and log_level `initLogger(std::string file_name, LoggerLevel log_level)`.
 
-* Example usage can be seen in the ros_example in the ros_template package (root/ros_template).
+* Logging is threadsafe by using a mutex internally.
 
-* In contrast to the mrm logger, a locking function is added to enable multithreaded usage. However this prevents from concurrent logging commands, but not from concurrent std::cout commands.
-
-* Prefixes can be set for logger instances. 
+* Prefixes can be set for logger instances.
   A prefix is placed right before the message.
   It can help to differentiate between different instances of the same type.
   E.g. when several camera-drivers are launched, each camera can set a different prefix and  logging outputs can easily be assigned to their respective instance.\
@@ -74,20 +68,20 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DROS_PACKAGE_NAME="${PROJECT
 
 * By default, the logger prints the origin from where the log command was called before the actual message.
   There are two ways of altering this behavior:
-  * when _initLogger is called, the Environment variable `ADUULM_LOGGER_SHOW_ORIGIN` is evaluated. If it is set to `"0"` the logger will no longer output the respective origin.\
+  * when `_initLogger` is called, the Environment variable `ADUULM_LOGGER_SHOW_ORIGIN` is evaluated. If it is set to `"0"` the logger will no longer output the respective origin.\
     E.g. when using ros launch scripts the origin print out can be deactivated with
-    ```xml 
+    ```xml
     <env name="ADUULM_LOGGER_SHOW_ORIGIN" value="0" />
     ```
   * the provided `_setShowOrigin(bool)` function can be used to en/disable the origin print out.
-  
+
   While the first method sets affects all instances, the second method only alter the behavior of the logger/sublogger instance whose function was called.
 
 ## Internal workings (IMPORTANT, READ THIS BEFORE USAGE!)
 
-In aduulm/source/ros/aduulm_logger!7, major changes to how the logger works were introduced. Before, it had a shared library in which the variables holding the logger level and other stuff were stored. One consequence of this was, that all libraries which were linked into a single executable or library shared the same logger level. Also, in ROS nodelets, all nodelets loaded in one nodelet manager shared the same logger levels. The MR improved this by storing the logger variables once per shared library or executable. This was achieved by setting a visibility attribute on the variables with `__attribute__((visibility("hidden")))`, which does not allow them to be linked outside of the shared library or executable that they are part of. They can be linked outside of static libraries, so one has to be careful when using static libraries, so that the logger variables are not multiply defined.
+A while back, major changes to how the logger works were introduced. Before, it had a shared library in which the variables holding the logger level and other stuff were stored. One consequence of this was, that all libraries which were linked into a single executable or library shared the same logger level. Also, in ROS nodelets, all nodelets loaded in one nodelet manager shared the same logger levels. The MR improved this by storing the logger variables once per shared library or executable. This was achieved by setting a visibility attribute on the variables with `__attribute__((visibility("hidden")))`, which does not allow them to be linked outside of the shared library or executable that they are part of. They can be linked outside of static libraries, so one has to be careful when using static libraries, so that the logger variables are not multiply defined.
 
-This MR introduced several code generation macros:
+The changes introduced several code generation macros:
 
 1. `DEFINE_LOGGER_VARIABLES`: This macro defines the variables that the logger uses, e.g. the logger level. This macro should be used exactly once per shared library or executable, in the global namespace.
 
@@ -97,23 +91,23 @@ This MR introduced several code generation macros:
  // logger_setup.h
  #if !defined LIBRARY_NAME_LOGGER_SETUP_H
  #define LIBRARY_NAME_LOGGER_SETUP_H
- 
+
  #include <aduulm_logger/aduulm_logger.hpp>
- 
+
  namespace LIBRARY_NAME
  {
 +DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER
  }  // namespace LIBRARY_NAME
- 
+
  #endif  // !defined(LIBRARY_NAME_LOGGER_SETUP_H)
 ```
 
 ```diff
  // logger_setup.cpp
  #include <LIBRARY_NAME/logger_setup.h>
- 
+
 +DEFINE_LOGGER_VARIABLES
- 
+
  namespace LIBRARY_NAME
  {
 +DEFINE_LOGGER_LIBRARY_INTERFACE_IMPLEMENTATION
@@ -127,32 +121,32 @@ This should be everything that is required for a library. LIBRARY_NAME::_initLog
  // MY_NODE.h
  #ifndef UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
  #define UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
- 
+
  #include <ros/ros.h>
  #include "aduulm_logger/aduulm_logger.hpp"
- 
+
  namespace PACKAGE_NAME
  {
  class CLASS_NAME
  {
  public:
    CLASS_NAME(ros::NodeHandle, ros::NodeHandle);
- 
+
 +  DEFINE_LOGGER_CLASS_INTERFACE_HEADER
- 
+
  private:
  };
  }  // namespace PACKAGE_NAME
- 
+
  #endif  // UPPER_PACKAGE_NAME_UPPER_CLASS_NAME_H
 ```
 
 ```diff
  // MY_NODE.cpp
  #include <PACKAGE_NAME/NODE_NAME.h>
- 
+
 +DEFINE_LOGGER_VARIABLES
- 
+
  namespace PACKAGE_NAME
  {
 
@@ -162,9 +156,9 @@ This should be everything that is required for a library. LIBRARY_NAME::_initLog
 +  _setStreamName(getName()); // for ROS nodelets
 +  _initLogger();
  }
- 
+
 +DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)
- 
+
  }  // namespace PACKAGE_NAME
 ```
 
@@ -176,12 +170,12 @@ Example usage, extracted from the ros_package_creation script:
  // MY_NODE.cpp
  #include <PACKAGE_NAME/NODE_NAME.h>
 +#include <LIBRARY_NAME/logger_setup.h>
- 
+
  DEFINE_LOGGER_VARIABLES
- 
+
  namespace PACKAGE_NAME
  {
- 
+
  CLASS_NAME::CLASS_NAME(ros::NodeHandle node_handle, ros::NodeHandle private_node_handle)
  {
 +  LOGGER_ADD_SUBLOGGER_LIBRARY(LIBRARY_NAME); // LIBRARY_NAME refers to the namespace in which the DEFINE_LOGGER_LIBRARY_INTERFACE_HEADER macro was used
@@ -190,17 +184,11 @@ Example usage, extracted from the ros_package_creation script:
    _initLogger();
    _setLogLevel(aduulm_logger::LoggerLevels::Debug);
  }
- 
+
  DEFINE_LOGGER_CLASS_INTERFACE_IMPLEMENTATION(CLASS_NAME)
- 
+
  }  // namespace PACKAGE_NAME
 ```
-
-### Simple message printer
-* Via rosrun: `rosrun 'rosrun aduulm_logger print.py <type> "<msg>"
-* Via launch file: `<node name="pub_err" pkg="aduulm_logger" type="print.py" args="<type> '<msg>'" output="screen" />`
-    * `<type>` may be either "fatal", "err", "info", "warn" or "debug"
-    * `<msg>` is your message
 
 ## Troubleshooting
 
@@ -216,23 +204,23 @@ Because the symbol visibility of the logger variables is restricted, linker erro
 
 This means that the library or executable you tried to compile has not defined the logger variables with `DEFINE_LOGGER_VARIABLES`. Make sure you used `DEFINE_LOGGER_VARIABLES` inside a `.cpp` file and outside of any namespace. If that doesn't help, see the last point of this troubleshooting section for further debugging steps.
 
-* Multiple definitions: 
+* Multiple definitions:
 
 ```
-CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x0): multiple definition of `aduulm_logger::g_stream_name[abi:cxx11]'                                                                                  
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x0): first defined here               
-CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.data+0x0): multiple definition of `aduulm_logger::g_log_level'                                             
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.data+0x10): first defined here                                                                                 
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x0): multiple definition of `aduulm_logger::g_stream_name[abi:cxx11]'
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x0): first defined here
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.data+0x0): multiple definition of `aduulm_logger::g_log_level'
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.data+0x10): first defined here
 CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x60): multiple definition of `aduulm_logger::g_sublogger_init_callbacks'
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x60): first defined here                                                                        
-CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.rodata+0x50): multiple definition of `aduulm_logger::level_mapping'                                       
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.rodata+0x100): first defined here                                                   
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x60): first defined here
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.rodata+0x50): multiple definition of `aduulm_logger::level_mapping'
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.rodata+0x100): first defined here
 CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x40): multiple definition of `aduulm_logger::g_sublogger_level_change_callbacks'
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x40): first defined here                                                                 
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x40): first defined here
 CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0x20): multiple definition of `aduulm_logger::g_sublogger_stream_name_change_callbacks[abi:cxx11]'
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x20): first defined here                                                                                                                            
-CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0xc0): multiple definition of `aduulm_logger::g_oFile'                                      
-CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0xc0): first defined here                             
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0x20): first defined here
+CMakeFiles/clustering_lib.dir/src/logger_setup.cpp.o:(.bss+0xc0): multiple definition of `aduulm_logger::g_oFile'
+CMakeFiles/clustering_lib.dir/src/clustering_lib.cpp.o:(.bss+0xc0): first defined here
 ```
 This most probably means that the logger variables were defined multiply inside one shared library or executable. You can debug this by checking which compilation units contain the definitions:
 
@@ -266,30 +254,3 @@ $ find ~/aduulm_sandbox/build -name "*.so" -exec bash -c 'echo $1; readelf -Ws $
 ```
 
 In this case, the shared library libclustering_lib.so has not included a definition of the logger variables. It needs to define them with `DEFINE_LOGGER_VARIABLES`.
-
-### Building
-* `catkin build`
-
-### Unit Tests
-
-### Config files
-
-### Launch files
-
-### Nodes
-
-#### Subscribed Topics
-
-#### Published Topics
-
-#### Services
-
-#### Actions
-
-#### Static Parameters
-
-#### Dynamic Parameters
-
-## Bugs & Feature Requests
-
-Please report bugs and request features using the [Issue Tracker](https://mrm-git.e-technik.uni-ulm.de/aduulm/source/ros/aduulm_logger/issues).

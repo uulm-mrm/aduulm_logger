@@ -7,8 +7,6 @@ get_version_string_from_package_xml(.)
 show_build_info("library")
 setup_git_hooks()
 
-find_package(Boost REQUIRED)
-
 # install python code
 # PYTHON_INSTALL_DIR is defined by aduulm_cmake_tools
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/python/aduulm_logger_python/
@@ -31,13 +29,7 @@ target_include_directories(${PROJECT_NAME}
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
 )
-target_include_directories(${PROJECT_NAME}
-  SYSTEM INTERFACE
-    ${Boost_INCLUDE_DIRS}
-)
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
-
-target_link_libraries(${PROJECT_NAME} INTERFACE ${Boost_LIBRARIES})
 
 set(EXTRA_PACKAGES_USED FALSE)
 set(EXTRA_PACKAGES "")

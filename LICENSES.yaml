@@ -1,1 +1,9 @@
+project:
+  - files: **/*
+    copyright:
+      - 2023, Jan Strohbeck
+      - 2023, Martin Herrmann
+      - 2023, Thomas Wodtko
+    license: Apache-2.0
+
 external: []
